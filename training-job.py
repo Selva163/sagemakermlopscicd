@@ -23,9 +23,9 @@ ACCOUNT_ID = session.boto_session.client(
 training_instance = 'ml.m4.xlarge'
 
 # Replace with your data s3 path
-training_data_s3_uri = 's3://{}/{}/boston-housing-training.csv'.format(
+training_data_s3_uri = 's3://{}/{}/train.csv'.format(
     BUCKET_NAME, PREFIX)
-validation_data_s3_uri = 's3://{}/{}/boston-housing-validation.csv'.format(
+validation_data_s3_uri = 's3://{}/{}/test.csv'.format(
     BUCKET_NAME, PREFIX)
 
 
@@ -51,7 +51,7 @@ boston_estimator = Estimator(
              "REGION": REGION,},
 
     tags=[{"Key": "email",
-           "Value": "haythemaws@gmail.com"}])
+           "Value": "avirassk@hotmail.com"}])
 
 boston_estimator.fit({'training': training_data_s3_uri,
                       'validation': validation_data_s3_uri}, wait=False)
