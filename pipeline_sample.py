@@ -15,7 +15,7 @@ from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.workflow.steps import TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
-
+import os 
 region = os.environ['AWS_DEFAULT_REGION']
 
 role = os.environ['IAM_ROLE_NAME']
