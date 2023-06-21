@@ -23,7 +23,7 @@ region = os.environ['AWS_DEFAULT_REGION']
 
 role = os.environ['IAM_ROLE_NAME']
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.20.0", role=role, instance_type="local", instance_count=1, sagemaker_session = local_pipeline_session
+    framework_version="0.20.0", role=role,instance_type="ml.m5.xlarge", instance_count=1, sagemaker_session = local_pipeline_session
 )
 
 
