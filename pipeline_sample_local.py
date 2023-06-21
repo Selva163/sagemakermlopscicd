@@ -91,7 +91,8 @@ step_evaluate.add_depends_on([step_train])
 plname = "test102"
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,step_evaluate]
+    steps=[step_process,step_train,step_evaluate],
+    sagemaker_session=local_pipeline_session
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
