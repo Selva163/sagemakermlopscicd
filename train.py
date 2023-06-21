@@ -16,7 +16,7 @@ if __name__ == "__main__":
     print("Training LR model")
     #model.fit(X_train, y_train)
     #model_output_directory = os.path.join("/opt/ml/model", "model.joblib")
-    print("Saving model to {}".format(model_output_directory))
+    #print("Saving model to {}".format(model_output_directory))
     #joblib.dump(model, model_output_directory)
     import boto3
     s3_resource = boto3.resource('s3')
