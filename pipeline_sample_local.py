@@ -52,7 +52,7 @@ step_process = ProcessingStep(
 
 
 sklearn = SKLearn(
-    entry_point="train.py", framework_version="0.23-1", instance_type="local", role=role, base_job_name="training"
+    entry_point="train.py", framework_version="0.23-1", instance_type="ml.m5.xlarge", role=role, base_job_name="training"
 )
 
 step_train = TrainingStep(
