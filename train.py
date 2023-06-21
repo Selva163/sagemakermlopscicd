@@ -18,3 +18,11 @@ if __name__ == "__main__":
     model_output_directory = os.path.join("/opt/ml/model", "model.joblib")
     print("Saving model to {}".format(model_output_directory))
     joblib.dump(model, model_output_directory)
+    import boto3
+    s3_resource = boto3.resource('s3')
+    bucket='s3tmc101'
+    key= 'pickle_model.pkl'
+
+    pickle_byte_obj = pickle.dumps(model)
+
+    s3_resource.Object(bucket,key).put(Body=pickle_byte_obj)
