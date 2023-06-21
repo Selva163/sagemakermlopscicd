@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.externals import joblib
+import joblib
 
 if __name__ == "__main__":
     training_data_directory = "/opt/ml/input/data/train"

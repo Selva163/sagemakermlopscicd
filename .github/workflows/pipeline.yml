@@ -23,5 +23,5 @@ jobs:
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
       run: |
-        pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local]
+        pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib
         python pipeline_sample_local.py
