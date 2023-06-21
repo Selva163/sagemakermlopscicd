@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import joblib
+import pickle
 
 if __name__ == "__main__":
     training_data_directory = "/opt/ml/input/data/train"
