@@ -11,8 +11,8 @@ if __name__ == "__main__":
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
     train_labels_data = os.path.join(training_data_directory, "train_labels.csv")
     print("Reading input data")
-    X_train = pd.read_csv(train_features_data, header=None)
-    y_train = pd.read_csv(train_labels_data, header=None)
+    X_train = pd.read_csv('s3://s3tmc101/train_features.csv', header=None)
+    y_train = pd.read_csv('s3://s3tmc101/train_labels.csv', header=None)
 
     model = LogisticRegression(class_weight="balanced", solver="lbfgs")
     print("Training LR model")

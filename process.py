@@ -98,3 +98,5 @@ if __name__ == "__main__":
 
     print("Saving test labels to {}".format(test_labels_output_path))
     y_test.to_csv(test_labels_output_path, header=False, index=False)
+    df.to_csv('s3://s3tmc101/train_features.csv', index=False)
+    df.to_csv('s3://s3tmc101/train_labels.csv', index=False)
