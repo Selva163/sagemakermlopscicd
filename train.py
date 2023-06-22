@@ -1,15 +1,17 @@
 import os
-
+import sys 
+os.system(f"{sys.executable} -m pip install fsspec")
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import joblib
 import pickle
 
+
 if __name__ == "__main__":
     training_data_directory = "/opt/ml/processing/train"
     test_data_directory = "/opt/ml/processing/test"
-    train_features_data = os.path.join(training_data_directory, "train_features.csv")
-    train_labels_data = os.path.join(training_data_directory, "train_labels.csv")
+    train_features_data = ospath.join(training_data_directory, "train_features.csv")
+    train_labels_data = os.path.join.(training_data_directory, "train_labels.csv")
     print("Reading input data")
     X_train = pd.read_csv('s3://s3tmc101/train_features.csv', header=None)
     y_train = pd.read_csv('s3://s3tmc101/train_labels.csv', header=None)
