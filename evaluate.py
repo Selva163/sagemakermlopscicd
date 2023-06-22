@@ -10,13 +10,12 @@ from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
 from io import StringIO # python3; python2: BytesIO 
 import boto3
 import io
+import pickle
 
 if __name__ == "__main__":
-    s3 = boto3.client('s3')
-    bucket = 's3tmc101'
-    key = 'pickle_model.pkl'
-    obj = s3.get_object(Bucket=bucket, Key=key)
-    model = pd.read_pickle(io.BytesIO(obj['Body'].read()), compression=None)
+
+    s3 = boto3.resource('s3')
+    model = pickle.loads(s3.Bucket("s3tmc101").Object("pickle_model.pkl").get()['Body'].read())
 
     print("Loading test input data")
     
