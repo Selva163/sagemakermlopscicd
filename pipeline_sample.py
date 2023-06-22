@@ -16,9 +16,9 @@ from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.workflow.steps import TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
 import os 
-region = os.environ['AWS_DEFAULT_REGION']
+region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
-role = os.environ['IAM_ROLE_NAME']
+role = 'arn:aws:iam::625594729569:role/service-role/AmazonSageMaker-ExecutionRole-20230222T105014' #os.environ['IAM_ROLE_NAME']
 sklearn_processor = SKLearnProcessor(
     framework_version="0.20.0", role=role, instance_type="ml.t3.medium", instance_count=1
 )
