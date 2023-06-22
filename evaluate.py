@@ -6,7 +6,6 @@ os.system(f"{sys.executable} -m pip install fsspec")
 os.system(f"{sys.executable} -m pip install -U scikit-learn")
 import tarfile
 import pandas as pd
-from sklearn.externals import joblib
 from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
 from io import StringIO # python3; python2: BytesIO 
 import boto3
