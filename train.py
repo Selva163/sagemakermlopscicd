@@ -2,6 +2,7 @@ import os
 import sys 
 os.system(f"{sys.executable} -m pip install s3fs")
 os.system(f"{sys.executable} -m pip install fsspec")
+os.system(f"{sys.executable} -m pip install -U scikit-learn")
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import joblib
