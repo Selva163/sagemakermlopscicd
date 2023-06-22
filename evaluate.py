@@ -9,6 +9,7 @@ from sklearn.externals import joblib
 from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
 from io import StringIO # python3; python2: BytesIO 
 import boto3
+import io
 
 if __name__ == "__main__":
     s3 = boto3.client('s3')
