@@ -34,7 +34,7 @@ if __name__ == "__main__":
     csv_buffer3 = StringIO()
     pd.DataFrame(predictions).to_csv(csv_buffer3, header=False, index=False)
     s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket, 'test_pred.csv').put(Body=csv_buffer3.getvalue())
+    s3_resource.Object("s3tmc101", 'test_pred.csv').put(Body=csv_buffer3.getvalue())
 
     evaluation_output_path = os.path.join("/opt/ml/processing/evaluation", "evaluation.json")
     print("Saving classification report to {}".format(evaluation_output_path))
