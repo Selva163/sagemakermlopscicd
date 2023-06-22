@@ -16,7 +16,7 @@ if __name__ == "__main__":
     bucket = 's3tmc101'
     key = 'pickle_model.pkl'
     obj = s3.get_object(Bucket=bucket, Key=key)
-    model = pd.read_pickle(io.BytesIO(obj['Body'].read()))
+    model = pd.read_pickle(io.BytesIO(obj['Body'].read()), compression=None)
 
     print("Loading test input data")
     
