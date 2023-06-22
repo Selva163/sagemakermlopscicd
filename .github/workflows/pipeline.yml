@@ -24,4 +24,4 @@ jobs:
         GITHUB_SHA: ${{ github.sha }}
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib s3fs fsspec 
-        python pipeline_sample_local.py
+        python pipeline_sample.py

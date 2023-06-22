@@ -20,7 +20,7 @@ region = os.environ['AWS_DEFAULT_REGION']
 
 role = os.environ['IAM_ROLE_NAME']
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.20.0", role=role, instance_type="ml.m5.xlarge", instance_count=1
+    framework_version="0.20.0", role=role, instance_type="m4.xlarge", instance_count=1
 )
 
 
@@ -49,7 +49,7 @@ step_process = ProcessingStep(
 
 
 sklearn = SKLearn(
-    entry_point="train.py", framework_version="0.23-1", instance_type="ml.m5.xlarge", role=role, base_job_name="training"
+    entry_point="train.py", framework_version="0.23-1", instance_type="m4.xlarge", role=role, base_job_name="training"
 )
 
 step_train = TrainingStep(
