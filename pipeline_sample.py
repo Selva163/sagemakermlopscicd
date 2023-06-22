@@ -20,7 +20,7 @@ region = os.environ['AWS_DEFAULT_REGION']
 
 role = os.environ['IAM_ROLE_NAME']
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.20.0", role=role, instance_type="ml.m4.xlarge", instance_count=1
+    framework_version="0.20.0", role=role, instance_type="ml.t3.medium", instance_count=1
 )
 
 
