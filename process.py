@@ -113,3 +113,14 @@ if __name__ == "__main__":
     y_train.to_csv(csv_buffer1, header=False, index=False)
     s3_resource = boto3.resource('s3')
     s3_resource.Object(bucket, 'train_labels.csv').put(Body=csv_buffer1.getvalue())
+    
+    bucket = 's3tmc101' # already created on S3
+    csv_buffer2 = StringIO()
+    pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
+    
+    csv_buffer3 = StringIO()
+    y_test.to_csv(csv_buffer3, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, 'test_labels.csv').put(Body=csv_buffer3.getvalue())

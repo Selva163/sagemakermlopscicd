@@ -1,26 +1,27 @@
 import json
 import os
+import sys 
+os.system(f"{sys.executable} -m pip install s3fs")
+os.system(f"{sys.executable} -m pip install fsspec")
 import tarfile
-
 import pandas as pd
-
 from sklearn.externals import joblib
 from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
+from io import StringIO # python3; python2: BytesIO 
+import boto3
 
 if __name__ == "__main__":
-    model_path = os.path.join("/opt/ml/processing/model", "model.tar.gz")
-    print("Extracting model from path: {}".format(model_path))
-    with tarfile.open(model_path) as tar:
-        tar.extractall(path=".")
-    print("Loading model")
-    model = joblib.load("model.joblib")
+    s3 = boto3.client('s3')
+    bucket = 's3tmc101'
+    key = 'pickle_model.pkl'
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    model = pd.read_pickle(io.BytesIO(obj['Body'].read()))
 
     print("Loading test input data")
-    test_features_data = os.path.join("/opt/ml/processing/test", "test_features.csv")
-    test_labels_data = os.path.join("/opt/ml/processing/test", "test_labels.csv")
+    
+    X_test = pd.read_csv('s3://s3tmc101/test_features.csv', header=None)
+    y_test = pd.read_csv('s3://s3tmc101/test_labels.csv', header=None)
 
-    X_test = pd.read_csv(test_features_data, header=None)
-    y_test = pd.read_csv(test_labels_data, header=None)
     predictions = model.predict(X_test)
 
     print("Creating classification evaluation report")
@@ -29,9 +30,18 @@ if __name__ == "__main__":
     report_dict["roc_auc"] = roc_auc_score(y_test, predictions)
 
     print("Classification report:\n{}".format(report_dict))
+    
+    csv_buffer3 = StringIO()
+    pd.DataFrame(predictions).to_csv(csv_buffer3, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, 'test_pred.csv').put(Body=csv_buffer3.getvalue())
 
     evaluation_output_path = os.path.join("/opt/ml/processing/evaluation", "evaluation.json")
     print("Saving classification report to {}".format(evaluation_output_path))
+    
+    s3 = boto3.resource('s3')
+    s3object = s3.Object('s3tmc101', 'report_dict.json')
 
-    with open(evaluation_output_path, "w") as f:
-        f.write(json.dumps(report_dict))
+    s3object.put(
+        Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
+    )
