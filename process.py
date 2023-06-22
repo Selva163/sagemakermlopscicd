@@ -11,6 +11,9 @@ from sklearn.compose import make_column_transformer
 
 from sklearn.exceptions import DataConversionWarning
 
+from io import StringIO # python3; python2: BytesIO 
+import boto3
+
 warnings.filterwarnings(action="ignore", category=DataConversionWarning)
 
 
@@ -98,5 +101,15 @@ if __name__ == "__main__":
 
     print("Saving test labels to {}".format(test_labels_output_path))
     y_test.to_csv(test_labels_output_path, header=False, index=False)
-    df.to_csv('s3://s3tmc101/train_features.csv', index=False)
-    df.to_csv('s3://s3tmc101/train_labels.csv', index=False)
+    
+
+    bucket = 's3tmc101' # already created on S3
+    csv_buffer = StringIO()
+    train_features.to_csv(csv_buffer, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, 'train_features.csv').put(Body=csv_buffer.getvalue())
+    
+    csv_buffer1 = StringIO()
+    y_train.to_csv(csv_buffer1, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, 'train_labels.csv').put(Body=csv_buffer1.getvalue())
