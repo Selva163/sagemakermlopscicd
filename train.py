@@ -1,5 +1,6 @@
 import os
 import sys 
+os.system(f"{sys.executable} -m pip install s3fs")
 os.system(f"{sys.executable} -m pip install fsspec")
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
