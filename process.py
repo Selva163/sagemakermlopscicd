@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     bucket = 's3tmc101' # already created on S3
     csv_buffer = StringIO()
-    train_features.to_csv(csv_buffer, header=False, index=False)
+    pd.DataFrame(train_features).to_csv(csv_buffer, header=False, index=False)
     s3_resource = boto3.resource('s3')
     s3_resource.Object(bucket, 'train_features.csv').put(Body=csv_buffer.getvalue())
     
