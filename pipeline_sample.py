@@ -19,8 +19,10 @@ from sagemaker.workflow.step_collections import RegisterModel
 import os 
 from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
 from sagemaker.workflow.condition_step import (
-    ConditionStep,
-    JsonGet,
+    ConditionStep
+)
+from sagemaker.workflow.functions import (
+    JsonGet
 )
 from sagemaker.workflow.properties import PropertyFile
 
