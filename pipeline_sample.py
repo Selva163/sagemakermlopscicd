@@ -27,7 +27,7 @@ from sagemaker.workflow.functions import (
 from sagemaker.workflow.properties import PropertyFile
 from sagemaker.model_metrics import MetricsSource, ModelMetrics 
 from sagemaker.workflow.functions import Join
-
+from sagemaker.workflow.execution_variables import ExecutionVariables
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
