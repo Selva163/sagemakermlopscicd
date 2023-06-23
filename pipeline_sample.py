@@ -22,7 +22,7 @@ from sagemaker.workflow.condition_step import (
     ConditionStep,
     JsonGet,
 )
-
+from sagemaker.workflow.properties import PropertyFile
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
