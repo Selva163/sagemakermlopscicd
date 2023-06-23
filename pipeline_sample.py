@@ -15,7 +15,9 @@ from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.workflow.steps import TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
+from sagemaker.workflow.step_collections import RegisterModel
 import os 
+
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
 role = 'arn:aws:iam::625594729569:role/service-role/AmazonSageMaker-ExecutionRole-20230222T105014' #os.environ['IAM_ROLE_NAME']
@@ -68,6 +70,16 @@ step_train.add_depends_on([step_process])
 
 # In[8]:
 
+step_register = RegisterModel(
+    name="RegisterModel",
+    estimator=sklearn,
+    model_data='s3://s3tmc101/model/',
+    content_types=["text/csv"],
+    response_types=["text/csv"],
+    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
+    transform_instances=["ml.m5.xlarge"],
+    model_package_group_name="sklearn-check-model-reg"
+)
 
 step_evaluate = ProcessingStep(
     name="Evaluate",
@@ -80,7 +92,7 @@ step_evaluate = ProcessingStep(
     ]
 )
 step_evaluate.add_depends_on([step_train])
-
+step_register.add_depends_on([step_evaluate])
 
 # In[9]:
 
@@ -88,7 +100,7 @@ step_evaluate.add_depends_on([step_train])
 plname = "test102"
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,step_evaluate]
+    steps=[step_process,step_train,step_evaluate,step_register]
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
