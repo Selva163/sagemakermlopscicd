@@ -17,6 +17,11 @@ from sagemaker.workflow.steps import TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.workflow.step_collections import RegisterModel
 import os 
+from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
+from sagemaker.workflow.condition_step import (
+    ConditionStep,
+    JsonGet,
+)
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
@@ -73,7 +78,7 @@ step_train.add_depends_on([step_process])
 step_register = RegisterModel(
     name="RegisterModel",
     estimator=sklearn,
-    model_data='s3://s3tmc101/model/',
+    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
     content_types=["text/csv"],
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
@@ -92,7 +97,25 @@ step_evaluate = ProcessingStep(
     ]
 )
 step_evaluate.add_depends_on([step_train])
-step_register.add_depends_on([step_evaluate])
+
+
+
+cond_lte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
+        left=JsonGet(
+            step=step_eval,
+            property_file="s3://s3tmc101/report_dict.json",
+            json_path="roc_auc",  # This should follow the structure of your report_dict defined in the evaluate.py file.
+        ),
+        right=0.7,  # You can change the threshold here
+)
+
+step_cond = ConditionStep(
+    name="ROCCondCheck",
+    conditions=[cond_lte],
+    if_steps=[step_register],
+    else_steps=[]
+)
+
 
 # In[9]:
 
@@ -100,7 +123,7 @@ step_register.add_depends_on([step_evaluate])
 plname = "test102"
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,step_evaluate,step_register]
+    steps=[step_process,step_train,step_evaluate,step_cond]
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
