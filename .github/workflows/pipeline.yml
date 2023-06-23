@@ -24,7 +24,7 @@ jobs:
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
       run: | 
-        pip install --no-cache-dir --upgrade awscli boto3 pandas pytest 
+        pip install --no-cache-dir --upgrade awscli boto3 pandas scikit-learn pytest 
         pytest
         
   submit_training_job:
