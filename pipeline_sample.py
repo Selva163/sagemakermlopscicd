@@ -25,6 +25,8 @@ from sagemaker.workflow.functions import (
     JsonGet
 )
 from sagemaker.workflow.properties import PropertyFile
+from sagemaker.model_metrics import MetricsSource, ModelMetrics 
+
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
@@ -78,16 +80,9 @@ step_train.add_depends_on([step_process])
 
 # In[8]:
 
-step_register = RegisterModel(
-    name="RegisterModel",
-    estimator=sklearn,
-    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
-    content_types=["text/csv"],
-    response_types=["text/csv"],
-    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
-    transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="sklearn-check-model-reg"
-)
+
+
+
 evaluation_report = PropertyFile(
     name="EvaluationReport",
     output_name="evaluation",
@@ -106,6 +101,26 @@ step_evaluate = ProcessingStep(
 step_evaluate.add_depends_on([step_train])
 
 
+model_metrics = ModelMetrics(
+    model_statistics=MetricsSource(
+        s3_uri="{}/evaluation.json".format(
+            step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"]["S3Uri"]
+        ),
+        content_type="application/json"
+    )
+)
+
+step_register = RegisterModel(
+    name="RegisterModel",
+    estimator=sklearn,
+    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+    content_types=["text/csv"],
+    response_types=["text/csv"],
+    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
+    transform_instances=["ml.m5.xlarge"],
+    model_package_group_name="sklearn-check-model-reg",
+    model_metrics=model_metrics
+)
 
 cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
@@ -122,6 +137,7 @@ step_cond = ConditionStep(
     if_steps=[step_register],
     else_steps=[]
 )
+
 
 
 # In[9]:
