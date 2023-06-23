@@ -23,7 +23,7 @@ if __name__ == "__main__":
     model.fit(X_train, y_train)
     #model_output_directory = os.path.join("/opt/ml/model", "model.joblib")
     #print("Saving model to {}".format(model_output_directory))
-    #joblib.dump(model, model_output_directory)
+    joblib.dump(model, 's3://s3tmc101/model/')
     import boto3
     s3_resource = boto3.resource('s3')
     bucket='s3tmc101'
