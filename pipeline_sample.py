@@ -95,9 +95,6 @@ step_evaluate = ProcessingStep(
     processor=sklearn_processor,
     inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
     outputs=[
-        ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation")
-    ],
-     outputs=[
         ProcessingOutput(
             output_name="evaluation",
             source="/opt/ml/processing/evaluation",
