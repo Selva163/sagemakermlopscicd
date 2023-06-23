@@ -23,6 +23,7 @@ from sagemaker.workflow.condition_step import (
     JsonGet,
 )
 
+
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
 role = 'arn:aws:iam::625594729569:role/service-role/AmazonSageMaker-ExecutionRole-20230222T105014' #os.environ['IAM_ROLE_NAME']
@@ -85,25 +86,29 @@ step_register = RegisterModel(
     transform_instances=["ml.m5.xlarge"],
     model_package_group_name="sklearn-check-model-reg"
 )
-
+evaluation_report = PropertyFile(
+    name="EvaluationReport",
+    output_name="evaluation",
+    path="evaluation.json"
+)
 step_evaluate = ProcessingStep(
     name="Evaluate",
     code="evaluate.py",
     processor=sklearn_processor,
     inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
     outputs=[
-        ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
-        ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
-    ]
+        ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation")
+    ],
+    property_files=[evaluation_report]
 )
 step_evaluate.add_depends_on([step_train])
 
 
 
-cond_lte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
+cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
-            step=step_eval,
-            property_file="s3://s3tmc101/report_dict.json",
+            step_name=step_evaluate.name,
+            property_file=evaluation_report,
             json_path="roc_auc",  # This should follow the structure of your report_dict defined in the evaluate.py file.
         ),
         right=0.7,  # You can change the threshold here
@@ -111,7 +116,7 @@ cond_lte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
 
 step_cond = ConditionStep(
     name="ROCCondCheck",
-    conditions=[cond_lte],
+    conditions=[cond_gte],
     if_steps=[step_register],
     else_steps=[]
 )

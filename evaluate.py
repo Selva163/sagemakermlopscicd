@@ -11,6 +11,7 @@ from io import StringIO # python3; python2: BytesIO
 import boto3
 import io
 import pickle
+import pathlib
 
 if __name__ == "__main__":
 
@@ -39,9 +40,12 @@ if __name__ == "__main__":
     evaluation_output_path = os.path.join("/opt/ml/processing/evaluation", "evaluation.json")
     print("Saving classification report to {}".format(evaluation_output_path))
     
-    s3 = boto3.resource('s3')
-    s3object = s3.Object('s3tmc101', 'report_dict.json')
+    with open(evaluation_output_path, "w") as f:
+        f.write(json.dumps(report_dict))
+    
+    #s3 = boto3.resource('s3')
+    #s3object = s3.Object('s3tmc101', 'report_dict.json')
 
-    s3object.put(
-        Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
-    )
+    #s3object.put(
+    #    Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
+    #)
