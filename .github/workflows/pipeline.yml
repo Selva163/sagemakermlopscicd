@@ -1,7 +1,7 @@
 name: Pipeline
 on:
   push:
-    branches: [ main1 ]
+    branches: [ main ]
 env:
   APPLICATION_NAME: startupapp
 
