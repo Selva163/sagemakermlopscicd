@@ -26,6 +26,7 @@ from sagemaker.workflow.functions import (
 )
 from sagemaker.workflow.properties import PropertyFile
 from sagemaker.model_metrics import MetricsSource, ModelMetrics 
+from sagemaker.workflow.functions import Join
 
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
@@ -96,6 +97,21 @@ step_evaluate = ProcessingStep(
     outputs=[
         ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation")
     ],
+     outputs=[
+        ProcessingOutput(
+            output_name="evaluation",
+            source="/opt/ml/processing/evaluation",
+            destination=Join(
+                on="/",
+                values=[
+                    "s3://{}".format('s3tmc101'),
+                    'modelprefix',
+                    ExecutionVariables.PIPELINE_EXECUTION_ID,
+                    "evaluation-report",
+                ],
+            ),
+        ),
+    ],
     property_files=[evaluation_report]
 )
 step_evaluate.add_depends_on([step_train])
@@ -103,10 +119,16 @@ step_evaluate.add_depends_on([step_train])
 
 model_metrics = ModelMetrics(
     model_statistics=MetricsSource(
-        s3_uri="{}/evaluation.json".format(
-            step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"]["S3Uri"]
+        s3_uri=Join(
+            on="/",
+            values=[
+                step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"][
+                    "S3Uri"
+                ],
+                "evaluation.json",
+            ],
         ),
-        content_type="application/json"
+        content_type="application/json",
     )
 )
 
