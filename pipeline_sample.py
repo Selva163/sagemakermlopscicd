@@ -35,6 +35,7 @@ from sagemaker.workflow.properties import PropertyFile
 from sagemaker.model_metrics import MetricsSource, ModelMetrics 
 from sagemaker.workflow.functions import Join
 from sagemaker.workflow.execution_variables import ExecutionVariables
+from sagemaker.model_monitor.dataset_format import DatasetFormat
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
