@@ -17,6 +17,7 @@ from sagemaker.workflow.steps import TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.workflow.step_collections import RegisterModel
 import os 
+from sagemaker.workflow.pipeline_context import PipelineSession
 from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
 from sagemaker.workflow.condition_step import (
     ConditionStep
