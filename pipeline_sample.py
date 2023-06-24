@@ -119,9 +119,7 @@ model_metrics = ModelMetrics(
         s3_uri=Join(
             on="/",
             values=[
-                step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"][
-                    "S3Uri"
-                ],
+                step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"]["S3Uri"],
                 "evaluation.json",
             ],
         ),
@@ -145,7 +143,7 @@ cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
             step_name=step_evaluate.name,
             property_file=evaluation_report,
-            json_path="roc_auc",  # This should follow the structure of your report_dict defined in the evaluate.py file.
+            json_path="binary_classification_metrics.roc_auc.value",  # This should follow the structure of your report_dict defined in the evaluate.py file.
         ),
         right=0.7,  # You can change the threshold here
 )
