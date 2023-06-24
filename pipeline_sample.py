@@ -37,7 +37,7 @@ sklearn_processor = SKLearnProcessor(
 )
 
 sagemaker_session = sagemaker.Session()
-featurestore_runtime_client = sagemaker_session.boto_session.client('sagemaker-runtime-session', region_name=region)
+featurestore_runtime_client = sagemaker_session.boto_session.client('sagemaker-runtime', region_name=region)
 default_bucket = sagemaker_session.default_bucket()
 
 def get_pipeline_session(region, default_bucket):
