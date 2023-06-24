@@ -111,7 +111,7 @@ check_job_config = CheckJobConfig(
 data_quality_check_config = DataQualityCheckConfig(
     baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri,
     dataset_format=DatasetFormat.csv(header=False),
-    output_s3_uri=Join(on='/', values=['s3:/', default_bucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
+    output_s3_uri=Join(on='/', values=['s3:/', default_bucket, 'baselinejob', ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
 )
 
 data_quality_check_step = QualityCheckStep(
