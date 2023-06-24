@@ -216,7 +216,7 @@ step_cond = ConditionStep(
 plname = "test102"
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,step_evaluate,step_cond]
+    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
