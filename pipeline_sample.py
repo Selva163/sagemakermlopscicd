@@ -36,12 +36,23 @@ sklearn_processor = SKLearnProcessor(
     framework_version="0.20.0", role=role, instance_type="ml.t3.medium", instance_count=1
 )
 
+sagemaker_session = sagemaker.Session()
+featurestore_runtime_client = sagemaker_session.boto_session.client('sagemaker-runtime-session', region_name=region)
+default_bucket = sagemaker_session.default_bucket()
 
-# In[5]:
+def get_pipeline_session(region, default_bucket):
+    boto_session = boto3.Session(region_name=region)
+    sagemaker_client = boto_session.client("sagemaker")
 
+    return PipelineSession(
+        boto_session=boto_session,
+        sagemaker_client=sagemaker_client,
+        default_bucket=default_bucket,
+    )
+pipeline_session = get_pipeline_session(region, default_bucket)
 
 input_data = "s3://sagemaker-sample-data-{}/processing/census/census-income.csv".format(region)
-
+model_package_group_name = "sklearn-check-model-reg"
 
 # In[6]:
 
@@ -81,8 +92,40 @@ step_train.add_depends_on([step_process])
 
 # In[8]:
 
+check_job_config = CheckJobConfig(
+    role=role,
+    instance_count=1,
+    instance_type="ml.c5.xlarge",
+    volume_size_in_gb=120,
+    sagemaker_session=pipeline_session,
+)
 
+data_quality_check_config = DataQualityCheckConfig(
+    baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri,
+    dataset_format=DatasetFormat.csv(header=False),
+    output_s3_uri=Join(on='/', values=['s3:/', default_bucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
+)
 
+data_quality_check_step = QualityCheckStep(
+    name="DataQualityCheckStep",
+    skip_check=True,
+    register_new_baseline=True,
+    quality_check_config=data_quality_check_config,
+    check_job_config=check_job_config,
+    model_package_group_name=model_package_group_name
+)
+
+drift_check_baselines = DriftCheckBaselines(
+    model_data_statistics=MetricsSource(
+        s3_uri=data_quality_check_step.properties.CalculatedBaselineStatistics,
+        content_type="application/json",
+    ),
+
+    model_data_constraints=MetricsSource(
+        s3_uri=data_quality_check_step.properties.CalculatedBaselineConstraints,
+        content_type="application/json",
+    )
+)
 
 evaluation_report = PropertyFile(
     name="EvaluationReport",
@@ -135,8 +178,9 @@ step_register = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="sklearn-check-model-reg",
-    model_metrics=model_metrics
+    model_package_group_name=model_package_group_name,
+    model_metrics=model_metrics,
+    drift_check_baselines=drift_check_baselines
 )
 
 cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
