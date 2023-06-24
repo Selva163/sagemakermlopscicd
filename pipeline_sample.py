@@ -36,6 +36,7 @@ from sagemaker.model_metrics import MetricsSource, ModelMetrics
 from sagemaker.workflow.functions import Join
 from sagemaker.workflow.execution_variables import ExecutionVariables
 from sagemaker.model_monitor.dataset_format import DatasetFormat
+from sagemaker.drift_check_baselines import DriftCheckBaselines
 
 region = 'us-east-1' #os.environ['AWS_DEFAULT_REGION']
 
