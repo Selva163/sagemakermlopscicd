@@ -104,7 +104,7 @@ step_train.add_depends_on([step_process])
 check_job_config = CheckJobConfig(
     role=role,
     instance_count=1,
-    instance_type="ml.t3.medium",
+    instance_type="ml.c5.xlarge",
     volume_size_in_gb=120,
     sagemaker_session=pipeline_session,
 )
