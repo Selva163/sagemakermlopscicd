@@ -10,6 +10,7 @@ import pandas as pd
 import argparse
 import boto3
 import joblib
+import sys
 os.system(f"{sys.executable} -m pip install s3fs")
 os.system(f"{sys.executable} -m pip install fsspec")
 os.system(f"{sys.executable} -m pip install -U scikit-learn")
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     with tarfile.open(model_path) as tar:
         tar.extractall(path=".")
 
-    logger.debug("Loading xgboost model.")
+    logger.debug("Loading model.")
     model = joblib.load("model.joblib")
 
     logger.debug("Reading input data.")
