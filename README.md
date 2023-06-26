@@ -1,7 +1,7 @@
 # SageMaker End2End CI/CD pipeline
-A CI/CD pipeline with SageMaker and Github that helps you to collaborate on a Machine Learning project from training to deployment.
+A CI/CD pipeline with SageMaker and Github that helps you to collaborate on a Machine Learning project on training, deployment, monitoring and continuous training.
 
 ## Usage
 For a demo of this project see my blog post:
 
-https://medium.com/@haythemtellili/machine-learning-ci-cd-pipeline-with-github-actions-and-amazon-sagemaker-f99818b7506a
+< coming soon >
