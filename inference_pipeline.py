@@ -110,7 +110,7 @@ data_quality_check_step = QualityCheckStep(
 )
 
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.23-1", role=role, instance_type="ml.m5.xlarge", instance_count=1
+    framework_version="0.23-1", role=role, instance_type="ml.t3.medium", instance_count=1
 )
 
 step_infer = ProcessingStep(
@@ -159,7 +159,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, step_infer],
+    steps=[step_latest_model_fetch,data_quality_check_step, step_infer],
 )
 
 import json
