@@ -8,6 +8,7 @@ from sagemaker.workflow.lambda_step import (
 from sagemaker.model import Model
 from sagemaker.inputs import CreateModelInput
 from sagemaker.workflow.steps import CreateModelStep
+from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.transformer import Transformer
 from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.inputs import TransformInput
@@ -22,11 +23,13 @@ from sagemaker.workflow.quality_check_step import (
     ModelQualityCheckConfig,
     QualityCheckStep,
 )
-
+import os
 
 sm_client = boto3.client(service_name="sagemaker")
 region = os.environ['AWS_DEFAULT_REGION']
 role = os.environ['AWS_SAGEMAKER_ROLE']
+testbucket = os.environ['AWS_TEST_BUCKET']
+
 sagemaker_session = sagemaker.Session()
 default_bucket = sagemaker_session.default_bucket()
 batch_data_uri = "s3://"
@@ -79,12 +82,16 @@ check_job_config = CheckJobConfig(
         instance_type="ml.c5.xlarge",
         volume_size_in_gb=120,
         sagemaker_session=pipeline_session,
+        env = {
+                "PipelineName": pipeline_name,
+                "Region": region,
+            }
     )
 
 data_quality_check_config = DataQualityCheckConfig(
-        baseline_dataset='s3://s3-cdp-atd-integration/ppo_bnso_retail_defection/score1.csv',
+        baseline_dataset=f's3://{testbucket}/test_features.csv',
         dataset_format=DatasetFormat.csv(header=False),
-        output_s3_uri="s3://s3-cdp-atd-integration/models_baselines_results/",
+        output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
         post_analytics_processor_script='postprocess_monitor_script.py',
     )
 
@@ -99,40 +106,57 @@ data_quality_check_step = QualityCheckStep(
     model_package_group_name=model_package_group_name
 )
 
-
-model = Model(
-    image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
-    model_data=step_latest_model_fetch.properties.Outputs["ModelUrl"],
-    sagemaker_session=sagemaker_session,
-    role=role,
+sklearn_processor = SKLearnProcessor(
+    framework_version="0.23-1", role=role, instance_type="ml.m5.xlarge", instance_count=1
 )
 
-inputs = CreateModelInput(
-    instance_type="ml.m5.large",
-)
-step_create_model = CreateModelStep(
-    name="CreateModel",
-    model=model,
-    inputs=inputs,
-)
-
-transformer = Transformer(
-    model_name=step_create_model.properties.ModelName,
-    instance_type="ml.m5.large",
-    instance_count=1,
-    output_path=f"s3://{default_bucket}/AbaloneTransform",
+step_infer = ProcessingStep(
+    name="Inference",
+    code="scripts/score.py",
+    processor=sklearn_processor,
+    inputs=[
+            ProcessingInput(
+                source=step_latest_model_fetch.properties.Outputs["ModelUrl"],
+                destination="/opt/ml/processing/model",
+            )
+    ],
+    job_arguments = ['--testbucket', testbucket
+    ]
 )
 
-step_transform = TransformStep(
-    name="Transform", transformer=transformer, inputs=TransformInput(data=batch_data)
-)
+# model = Model( 
+#     image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
+#     model_data=step_latest_model_fetch.properties.Outputs["ModelUrl"],
+#     sagemaker_session=sagemaker_session,
+#     role=role,
+# )
+
+# inputs = CreateModelInput(
+#     instance_type="ml.m5.large",
+# )
+# step_create_model = CreateModelStep(
+#     name="CreateModel",
+#     model=model,
+#     inputs=inputs,
+# )
+
+# transformer = Transformer(
+#     model_name=step_create_model.properties.ModelName,
+#     instance_type="ml.m5.large",
+#     instance_count=1,
+#     output_path=f"s3://{default_bucket}/AbaloneTransform",
+# )
+
+# step_transform = TransformStep(
+#     name="Transform", transformer=transformer, inputs=TransformInput(data=batch_data)
+# )
 
 pipeline = Pipeline(
     name=pipeline_name,
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, data_quality_check_step, step_create_model, step_transform],
+    steps=[step_latest_model_fetch, step_infer],
 )
 
 import json

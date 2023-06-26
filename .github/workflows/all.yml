@@ -1,7 +1,7 @@
 name: Pipeline
 on:
   push:
-    branches: [ maiqn ]
+    branches: [ madin ]
 env:
   APPLICATION_NAME: startupapp
 
@@ -22,6 +22,7 @@ jobs:
         PREFIX: ${{ secrets.PREFIX }}
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
+        AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib s3fs fsspec 
         python pipeline_sample_local.py
@@ -43,6 +44,8 @@ jobs:
         PREFIX: ${{ secrets.PREFIX }}
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
+        AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
+      working-directory: ./testcases
       run: | 
         pip install --no-cache-dir --upgrade awscli boto3 pandas scikit-learn pytest 
         pytest
@@ -64,6 +67,8 @@ jobs:
         PREFIX: ${{ secrets.PREFIX }}
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
+        AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
+        AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
       run: |
-        pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib s3fs fsspec 
+        pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python pipeline_sample.py
