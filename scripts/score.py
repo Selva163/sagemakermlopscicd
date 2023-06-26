@@ -10,6 +10,9 @@ import pandas as pd
 import argparse
 import boto3
 import joblib
+os.system(f"{sys.executable} -m pip install s3fs")
+os.system(f"{sys.executable} -m pip install fsspec")
+os.system(f"{sys.executable} -m pip install -U scikit-learn")
 logger = logging.getLogger() 
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
