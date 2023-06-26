@@ -9,12 +9,14 @@ from sagemaker.model import Model
 from sagemaker.inputs import CreateModelInput
 from sagemaker.workflow.steps import CreateModelStep
 from sagemaker.workflow.steps import ProcessingStep
+from sagemaker.processing import ProcessingInput, ProcessingOutput
 from sagemaker.transformer import Transformer
 from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.inputs import TransformInput
 from sagemaker.workflow.steps import TransformStep
 import sagemaker
 import boto3
+from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker import get_execution_role
 from sagemaker.workflow.pipeline_context import PipelineSession
 from sagemaker.workflow.check_job_config import CheckJobConfig
