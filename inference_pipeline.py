@@ -93,7 +93,7 @@ data_quality_check_config = DataQualityCheckConfig(
         baseline_dataset=f's3://{testbucket}/test_features.csv',
         dataset_format=DatasetFormat.csv(header=False),
         output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
-        post_analytics_processor_script='postprocess_monitor_script.py',
+        post_analytics_processor_script='scripts/postprocess_monitor_script.py',
     )
 
 data_quality_check_step = QualityCheckStep(
