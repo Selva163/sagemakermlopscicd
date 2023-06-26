@@ -24,6 +24,7 @@ from sagemaker.workflow.quality_check_step import (
     QualityCheckStep,
 )
 import os
+from sagemaker.model_monitor.dataset_format import DatasetFormat
 
 sm_client = boto3.client(service_name="sagemaker")
 region = os.environ['AWS_DEFAULT_REGION']
