@@ -42,7 +42,11 @@ def print_shape(df):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--train-test-split-ratio", type=float, default=0.3)
+    parser.add_argument('--runtype', type=str, default="notest")
+    parser.add_argument('--testbucket', type=str, default="")
+
     args, _ = parser.parse_known_args()
 
     print("Received arguments {}".format(args))
@@ -63,7 +67,7 @@ if __name__ == "__main__":
         )
     )
 
-    split_ratio = 0.2
+    split_ratio = args.train_test_split_ratio
     print("Splitting data into train and test sets with ratio {}".format(split_ratio))
     X_train, X_test, y_train, y_test = train_test_split(
         df.drop("income", axis=1), df["income"], test_size=split_ratio, random_state=0
@@ -102,25 +106,24 @@ if __name__ == "__main__":
     print("Saving test labels to {}".format(test_labels_output_path))
     y_test.to_csv(test_labels_output_path, header=False, index=False)
     
+    if args.runtype == "test":
+        bucket = args.testbucket # already created on S3
+        csv_buffer = StringIO()
+        pd.DataFrame(train_features).to_csv(csv_buffer, header=False, index=False)
+        s3_resource = boto3.resource('s3')
+        s3_resource.Object(bucket, 'train_features.csv').put(Body=csv_buffer.getvalue())
+        
+        csv_buffer1 = StringIO()
+        y_train.to_csv(csv_buffer1, header=False, index=False)
+        s3_resource = boto3.resource('s3')
+        s3_resource.Object(bucket, 'train_labels.csv').put(Body=csv_buffer1.getvalue())
 
-    bucket = 's3tmc101' # already created on S3
-    csv_buffer = StringIO()
-    pd.DataFrame(train_features).to_csv(csv_buffer, header=False, index=False)
-    s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket, 'train_features.csv').put(Body=csv_buffer.getvalue())
-    
-    csv_buffer1 = StringIO()
-    y_train.to_csv(csv_buffer1, header=False, index=False)
-    s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket, 'train_labels.csv').put(Body=csv_buffer1.getvalue())
-    
-    bucket = 's3tmc101' # already created on S3
-    csv_buffer2 = StringIO()
-    pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
-    s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
-    
-    csv_buffer3 = StringIO()
-    y_test.to_csv(csv_buffer3, header=False, index=False)
-    s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket, 'test_labels.csv').put(Body=csv_buffer3.getvalue())
+        csv_buffer2 = StringIO()
+        pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
+        s3_resource = boto3.resource('s3')
+        s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
+        
+        csv_buffer3 = StringIO()
+        y_test.to_csv(csv_buffer3, header=False, index=False)
+        s3_resource = boto3.resource('s3')
+        s3_resource.Object(bucket, 'test_labels.csv').put(Body=csv_buffer3.getvalue())
