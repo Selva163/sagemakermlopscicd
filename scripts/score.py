@@ -7,7 +7,6 @@ import tarfile
 from math import sqrt
 import os 
 import pandas as pd
-import xgboost
 import argparse
 import boto3
 logger = logging.getLogger() 
