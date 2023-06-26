@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import argparse
 import boto3
+import joblib
 logger = logging.getLogger() 
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())

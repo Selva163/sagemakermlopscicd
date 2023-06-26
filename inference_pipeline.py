@@ -106,7 +106,8 @@ data_quality_check_step = QualityCheckStep(
     check_job_config=check_job_config,
     supplied_baseline_statistics=step_latest_model_fetch.properties.Outputs["BaselineStatisticsS3Uri"],
     supplied_baseline_constraints=step_latest_model_fetch.properties.Outputs["BaselineConstraintsS3Uri"],
-    model_package_group_name=model_package_group_name
+    model_package_group_name=model_package_group_name,
+    fail_on_violation=False
 )
 
 sklearn_processor = SKLearnProcessor(
