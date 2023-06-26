@@ -68,6 +68,7 @@ jobs:
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
+        AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python pipeline_sample.py
