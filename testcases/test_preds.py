@@ -14,7 +14,7 @@ test_features = [[0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.
 
 def getPredictions(tlist):
     s3 = boto3.resource('s3')
-    model = pickle.loads(s3.Bucket("s3tmc101").Object("pickle_model.pkl").get()['Body'].read())
+    model = pickle.loads(s3.Bucket(testbucket).Object("pickle_model.pkl").get()['Body'].read())
     t_df = pd.DataFrame(tlist)
     predictions = model.predict(t_df)
     return predictions

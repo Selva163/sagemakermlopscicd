@@ -83,4 +83,4 @@ pipeline = Pipeline(
 )
 
 pipeline.upsert(role_arn=role)
-execution=pipeline.start()
+# execution=pipeline.start()
