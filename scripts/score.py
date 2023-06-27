@@ -11,6 +11,7 @@ import argparse
 import boto3
 import joblib
 import sys
+from io import StringIO
 os.system(f"{sys.executable} -m pip install s3fs")
 os.system(f"{sys.executable} -m pip install fsspec")
 os.system(f"{sys.executable} -m pip install -U scikit-learn")
