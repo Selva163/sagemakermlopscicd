@@ -122,6 +122,11 @@ if __name__ == "__main__":
         pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
         s3_resource = boto3.resource('s3')
         s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
+
+        csv_buffer21 = StringIO()
+        pd.DataFrame(test_features).to_csv(csv_buffer21, index=False)
+        s3_resource = boto3.resource('s3')
+        s3_resource.Object(bucket, 'test_features_raw.csv').put(Body=csv_buffer21.getvalue())
         
         csv_buffer3 = StringIO()
         y_test.to_csv(csv_buffer3, header=False, index=False)

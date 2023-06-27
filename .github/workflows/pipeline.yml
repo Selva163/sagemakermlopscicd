@@ -72,10 +72,11 @@ jobs:
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python pipeline_sample.py
-        
+
   submit_inference_pipeline:
     runs-on: ubuntu-latest
     name: Job-DeployPipeline-Inference
+    needs: testci
     steps:
     - uses: actions/checkout@v3
     - name: Fire SageMaker
