@@ -21,17 +21,24 @@ import io
 import pickle
 import pathlib
 import argparse
+from sagemaker.experiments.run import Run,load_run
+from sagemaker.session import Session
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--runtype', type=str, default="notest")
     parser.add_argument('--testbucket', type=str, default="")
+    parser.add_argument('--experiment-name', type=str, default="")
+    parser.add_argument('--run-name', type=str, default="")
+    parser.add_argument('--region', type=str, default="")
 
     args, _ = parser.parse_known_args()
 
     s3 = boto3.resource('s3')
     model = pickle.loads(s3.Bucket(args.testbucket).Object("pickle_model.pkl").get()['Body'].read())
+    boto_session = boto3.session.Session(region_name=args.region)
+    sagemaker_session = Session(boto_session=boto_session)
 
     print("Loading test input data")
     
@@ -91,3 +98,8 @@ if __name__ == "__main__":
         s3object.put(
         Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
         )
+    else:
+        with load_run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+            run.log_parameters(
+                {"precision": precision, "accuracy": accuracy, "recall": recall, "roc_auc": roc_auc}
+            )

@@ -31,6 +31,7 @@ from sagemaker.workflow.functions import Join
 from sagemaker.workflow.execution_variables import ExecutionVariables
 from sagemaker.model_monitor.dataset_format import DatasetFormat
 from sagemaker.drift_check_baselines import DriftCheckBaselines
+from time import gmtime, strftime
 
 region = os.environ['AWS_DEFAULT_REGION']
 role = os.environ['AWS_SAGEMAKER_ROLE']
@@ -40,6 +41,11 @@ processing_instance = "ml.t3.medium"
 training_instance = "ml.m4.xlarge"
 databaseline_instance = "ml.c5.xlarge"
 plname = "test102"
+
+dtimem = gmtime()
+fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
+experiment_name = 'sklearn-exp-101' 
+run_name = "run-"+fg_ts_str
 
 
 sklearn_processor = SKLearnProcessor(
@@ -83,7 +89,7 @@ sklearn = SKLearn(
     instance_type=training_instance, 
     role=role, 
     base_job_name="training",
-    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket}
+    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket, 'experiment-name': experiment_name , 'run-name':run_name}
 )
 
 step_train = TrainingStep(
@@ -153,7 +159,10 @@ step_evaluate = ProcessingStep(
         ),
     ],
     property_files=[evaluation_report],
-    job_arguments = ['--testbucket', testbucket]
+    job_arguments = ['--testbucket', testbucket,
+    'experiment-name', experiment_name,
+    'run-name', run_name
+    ]
 )
 step_evaluate.add_depends_on([step_train])
 
@@ -206,4 +215,4 @@ pipeline = Pipeline(
     steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
 )
 pipeline.upsert(role_arn=role)
-# execution=pipeline.start()
+execution=pipeline.start()

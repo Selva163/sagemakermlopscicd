@@ -8,7 +8,9 @@ from sklearn.linear_model import LogisticRegression
 import joblib
 import pickle
 import argparse
-
+from sagemaker.experiments.run import Run,load_run
+from sagemaker.session import Session
+import boto3
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,10 +18,19 @@ if __name__ == "__main__":
     parser.add_argument('--solver', type=str, default="lbfgs")
     parser.add_argument('--runtype', type=str, default="notest")
     parser.add_argument('--testbucket', type=str, default="")
+    parser.add_argument('--experiment-name', type=str, default="")
+    parser.add_argument('--run-name', type=str, default="")
+    parser.add_argument('--region', type=str, default="")
 
     parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR'))
 
     args, _ = parser.parse_known_args()
+    boto_session = boto3.session.Session(region_name=args.region)
+    sagemaker_session = Session(boto_session=boto_session)
+    with Run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+        run.log_parameters(
+            {"device": 'cpu'}
+        )
 
     training_data_directory = "/opt/ml/processing/train"
     test_data_directory = "/opt/ml/processing/test"
@@ -32,7 +43,13 @@ if __name__ == "__main__":
     model = LogisticRegression(class_weight="balanced", solver=args.solver)
     print("Training LR model")
     model.fit(X_train, y_train)
-    joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
+    
+    if args.runtype == "notest":
+        joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
+        with load_run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+            run.log_parameters(
+                {"class_weight": "balanced", "solver": args.solver, "input_size_rows": X_train.shape[0], "input_size_cols": X_train.shape[1]}
+            )
 
     if args.runtype == "test":
         import boto3
