@@ -4,6 +4,9 @@ import sys
 os.system(f"{sys.executable} -m pip install s3fs")
 os.system(f"{sys.executable} -m pip install fsspec")
 os.system(f"{sys.executable} -m pip install -U scikit-learn")
+os.system(f"{sys.executable} -m pip install boto3")
+os.system(f"{sys.executable} -m pip install sagemaker")
+
 import tarfile
 import pandas as pd
 from sklearn.metrics import (

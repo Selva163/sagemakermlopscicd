@@ -170,8 +170,9 @@ step_evaluate = ProcessingStep(
     ],
     property_files=[evaluation_report],
     job_arguments = ['--testbucket', testbucket,
-    'experiment-name', experiment_name,
-    'run-name', run_name
+    '--experiment-name', experiment_name,
+    '--run-name', run_name,
+    '--region', region
     ]
 )
 step_evaluate.add_depends_on([step_train])
