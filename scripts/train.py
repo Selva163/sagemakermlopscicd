@@ -32,13 +32,12 @@ if __name__ == "__main__":
             {"device": 'cpu'}
         )
 
-    training_data_directory = "/opt/ml/processing/train"
-    test_data_directory = "/opt/ml/processing/test"
+    training_data_directory = "/opt/ml/input/data/train"
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
     train_labels_data = os.path.join(training_data_directory, "train_labels.csv")
     print("Reading input data")
-    X_train = pd.read_csv(f's3://{args.testbucket}/train_features.csv', header=None)
-    y_train = pd.read_csv(f's3://{args.testbucket}/train_labels.csv', header=None)
+    X_train = pd.read_csv(train_features_data, header=None)
+    y_train = pd.read_csv(train_labels_data, header=None)
 
     model = LogisticRegression(class_weight="balanced", solver=args.solver)
     print("Training LR model")

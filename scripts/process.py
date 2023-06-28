@@ -87,8 +87,8 @@ if __name__ == "__main__":
 
     print("Train data shape after preprocessing: {}".format(train_features.shape))
     print("Test data shape after preprocessing: {}".format(test_features.shape))
-    print(pd.DataFrame(train_features.columns))
-    print(pd.DataFrame(test_features.columns))
+    print(pd.DataFrame(train_features).columns)
+    print(pd.DataFrame(test_features).columns)
     train_features_output_path = os.path.join("/opt/ml/processing/train", "train_features.csv")
     train_labels_output_path = os.path.join("/opt/ml/processing/train", "train_labels.csv")
 

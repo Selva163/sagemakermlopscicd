@@ -5,6 +5,7 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 import json
 from sagemaker.s3 import S3Downloader
 from sagemaker.processing import ProcessingInput, ProcessingOutput
+from sagemaker.inputs import TrainingInput
 from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.workflow.steps import TrainingStep
@@ -94,8 +95,17 @@ sklearn = SKLearn(
 
 step_train = TrainingStep(
     name="TrainStep",
-    estimator=sklearn
+    estimator=sklearn,
+    inputs={
+        "train": TrainingInput(
+            s3_data=step_process.properties.ProcessingOutputConfig.Outputs[
+                "train_data"
+            ].S3Output.S3Uri,
+            content_type="text/csv"
+        )
+    }
 )
+
 step_train.add_depends_on([step_process])
 
 check_job_config = CheckJobConfig(
@@ -113,7 +123,7 @@ data_quality_check_config = DataQualityCheckConfig(
 )
 
 data_quality_check_step = QualityCheckStep(
-    name="DataQualityCheckStep",
+    name="RegisterBaselineForMonitor",
     skip_check=True,
     register_new_baseline=True,
     quality_check_config=data_quality_check_config,
@@ -203,7 +213,7 @@ cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
 )
 
 step_cond = ConditionStep(
-    name="ROCCondCheck",
+    name="MetricCheckForModelRegister",
     conditions=[cond_gte],
     if_steps=[step_register],
     else_steps=[]
