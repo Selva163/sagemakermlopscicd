@@ -90,7 +90,7 @@ sklearn = SKLearn(
     instance_type=training_instance, 
     role=role, 
     base_job_name="training",
-    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket, 'experiment-name': experiment_name , 'run-name':run_name}
+    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket, 'experiment-name': experiment_name , 'run-name':run_name, 'region': region}
 )
 
 step_train = TrainingStep(
