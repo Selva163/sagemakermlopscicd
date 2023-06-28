@@ -39,14 +39,25 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     s3 = boto3.resource('s3')
-    model = pickle.loads(s3.Bucket(args.testbucket).Object("pickle_model.pkl").get()['Body'].read())
+    
+    model_path = os.path.join("/opt/ml/processing/model", "model.tar.gz")
+    print("Extracting model from path: {}".format(model_path))
+    with tarfile.open(model_path) as tar:
+        tar.extractall(path=".")
+    print("Loading model")
+    model = joblib.load("model.joblib")
+
+
     boto_session = boto3.session.Session(region_name=args.region)
     sagemaker_session = Session(boto_session=boto_session)
 
     print("Loading test input data")
     
-    X_test = pd.read_csv(f's3://{args.testbucket}/test_features.csv', header=None)
-    y_test = pd.read_csv(f's3://{args.testbucket}/test_labels.csv', header=None)
+    test_features_data = os.path.join("/opt/ml/processing/test", "test_features.csv")
+    test_labels_data = os.path.join("/opt/ml/processing/test", "test_labels.csv")
+
+    X_test = pd.read_csv(test_features_data, header=None)
+    y_test = pd.read_csv(test_labels_data, header=None)
 
     predictions = model.predict(X_test)
     prediction_probabilities = model.predict_proba(X_test)

@@ -152,7 +152,10 @@ step_evaluate = ProcessingStep(
     name="Evaluate",
     code="scripts/evaluate.py",
     processor=sklearn_processor,
-    inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
+    inputs=[
+        ProcessingInput(source=step_train.properties.ModelArtifacts.S3ModelArtifacts, destination="/opt/ml/processing/model"),
+        ProcessingInput(source=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, destination="/opt/ml/processing/test"),
+    ],
     outputs=[
         ProcessingOutput(
             output_name="evaluation",
