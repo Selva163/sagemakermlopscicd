@@ -30,10 +30,6 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     boto_session = boto3.session.Session(region_name=args.region)
     sagemaker_session = Session(boto_session=boto_session)
-    dtimem = gmtime()
-    fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
-    run_name = "run-"+fg_ts_str
-    
 
     training_data_directory = "/opt/ml/input/data/train"
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
@@ -62,7 +58,10 @@ if __name__ == "__main__":
     if args.runtype == "notest":
         joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
         for hr in hypertuning_results_list:
-            with Run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+            dtimem = gmtime()
+            fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
+            run_name = "run-"+fg_ts_str
+            with Run(experiment_name=args.experiment_name, run_name=run_name, sagemaker_session=sagemaker_session) as run:
                 run.log_parameters(
                     {"C": hr[0], "solver": hr[1], "penalty": hr[2], "runtype": 'train', 'device':'cpu'}
                     )
