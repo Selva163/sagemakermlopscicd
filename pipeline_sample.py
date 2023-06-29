@@ -276,7 +276,7 @@ step_create_model = ModelStep(
 
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_create_model]
+    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
