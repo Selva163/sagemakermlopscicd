@@ -51,7 +51,7 @@ processing_instance = "ml.t3.medium"
 training_instance = "ml.m4.xlarge"
 databaseline_instance = "ml.c5.xlarge"
 plname = "test102"
-
+lambda_function_name = "get_latest_imageuri"
 dtimem = gmtime()
 fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
 experiment_name = 'sklearn-exp-101' 
