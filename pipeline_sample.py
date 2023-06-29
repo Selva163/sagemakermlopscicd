@@ -54,8 +54,7 @@ plname = "test102"
 lambda_function_name = "get_latest_imageuri"
 dtimem = gmtime()
 fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
-experiment_name = 'sklearn-exp-101' 
-run_name = "run-"+fg_ts_str
+experiment_name = 'sklearn-exp-101-'+fg_ts_str
 
 
 sklearn_processor = SKLearnProcessor(
@@ -99,7 +98,7 @@ sklearn = SKLearn(
     instance_type=training_instance, 
     role=role, 
     base_job_name="training",
-    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket, 'experiment-name': experiment_name , 'run-name':run_name, 'region': region}
+    hyperparameters = {'solver': 'lbfgs', 'testbucket': testbucket, 'experiment-name': experiment_name , 'region': region}
 )
 
 step_train = TrainingStep(
@@ -183,7 +182,6 @@ step_evaluate = ProcessingStep(
     property_files=[evaluation_report],
     job_arguments = ['--testbucket', testbucket,
     '--experiment-name', experiment_name,
-    '--run-name', run_name,
     '--region', region
     ]
 )
@@ -273,10 +271,11 @@ step_create_model = ModelStep(
         step_args=step_args,
     )
 
-
+# psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
+psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
+    steps=psteps
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()

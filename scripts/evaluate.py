@@ -7,7 +7,7 @@ os.system(f"{sys.executable} -m pip install -U scikit-learn")
 os.system(f"{sys.executable} -m pip install boto3")
 os.system(f"{sys.executable} -m pip install sagemaker")
 import joblib
-
+from time import gmtime, strftime
 import tarfile
 import pandas as pd
 from sklearn.metrics import (
@@ -114,7 +114,11 @@ if __name__ == "__main__":
         Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
         )
     else:
-        with load_run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+        dtimem = gmtime()
+        fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
+        run_name = "run-"+fg_ts_str
+        with Run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
             run.log_parameters(
-                {"precision": precision, "accuracy": accuracy, "recall": recall, "roc_auc": roc_auc}
-            )
+                {"C": model.C, "solver": model.solver, "penalty": model.penalty, "runtype": 'evaluate', 'device':'cpu'}
+                )
+            run.log_metric("accuracy", accuracy)

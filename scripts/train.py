@@ -13,6 +13,8 @@ import argparse
 from sagemaker.experiments.run import Run,load_run
 from sagemaker.session import Session
 import boto3
+from sklearn.model_selection import GridSearchCV
+from time import gmtime, strftime
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -21,7 +23,6 @@ if __name__ == "__main__":
     parser.add_argument('--runtype', type=str, default="notest")
     parser.add_argument('--testbucket', type=str, default="")
     parser.add_argument('--experiment-name', type=str, default="")
-    parser.add_argument('--run-name', type=str, default="")
     parser.add_argument('--region', type=str, default="")
 
     parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR'))
@@ -29,10 +30,10 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     boto_session = boto3.session.Session(region_name=args.region)
     sagemaker_session = Session(boto_session=boto_session)
-    with Run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
-        run.log_parameters(
-            {"device": 'cpu'}
-        )
+    dtimem = gmtime()
+    fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
+    run_name = "run-"+fg_ts_str
+    
 
     training_data_directory = "/opt/ml/input/data/train"
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
@@ -41,16 +42,31 @@ if __name__ == "__main__":
     X_train = pd.read_csv(train_features_data, header=None)
     y_train = pd.read_csv(train_labels_data, header=None)
 
-    model = LogisticRegression(class_weight="balanced", solver=args.solver)
+    logreg=LogisticRegression(solver = 'liblinear')
+    parameters = [{'solver': ['lbfgs', 'liblinear'],
+                'penalty':[ 'elasticnet', 'l1', 'l2'],
+                'C':[ 0.01, 0.1, 1, 10]}]
+    grid_search = GridSearchCV(estimator = logreg,  
+                            param_grid = parameters,
+                            scoring = 'accuracy',
+                            cv = 5,
+                            verbose=0)
+    grid_search.fit(X_train, y_train)
+
     print("Training LR model")
-    model.fit(X_train, y_train)
-    
+    model = grid_search.best_estimator_
+    cv_results = grid_search.cv_results_
+    df = pd.DataFrame(cv_results)
+    hypertuning_results_list = df[df['mean_test_score'].notna()][['param_C', 'param_solver', 'param_penalty', 'mean_test_score']].values
+
     if args.runtype == "notest":
         joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
-        with load_run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
-            run.log_parameters(
-                {"class_weight": "balanced", "solver": args.solver, "input_size_rows": X_train.shape[0], "input_size_cols": X_train.shape[1]}
-            )
+        for hr in hypertuning_results_list:
+            with Run(experiment_name=args.experiment_name, run_name=args.run_name, sagemaker_session=sagemaker_session) as run:
+                run.log_parameters(
+                    {"C": hr[0], "solver": hr[1], "penalty": hr[2], "runtype": 'train', 'device':'cpu'}
+                    )
+                run.log_metric("accuracy", hr[3])
 
     if args.runtype == "test":
         import boto3
