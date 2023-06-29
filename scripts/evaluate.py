@@ -6,6 +6,7 @@ os.system(f"{sys.executable} -m pip install fsspec")
 os.system(f"{sys.executable} -m pip install -U scikit-learn")
 os.system(f"{sys.executable} -m pip install boto3")
 os.system(f"{sys.executable} -m pip install sagemaker")
+import joblib
 
 import tarfile
 import pandas as pd

@@ -33,6 +33,15 @@ from sagemaker.workflow.execution_variables import ExecutionVariables
 from sagemaker.model_monitor.dataset_format import DatasetFormat
 from sagemaker.drift_check_baselines import DriftCheckBaselines
 from time import gmtime, strftime
+from sagemaker.lambda_helper import Lambda
+from sagemaker.workflow.lambda_step import (
+    LambdaStep,
+    LambdaOutput,
+    LambdaOutputTypeEnum,
+)
+from sagemaker.model import Model
+from sagemaker.workflow.model_step import ModelStep
+from sagemaker.workflow.steps import CreateModelStep
 
 region = os.environ['AWS_DEFAULT_REGION']
 role = os.environ['AWS_SAGEMAKER_ROLE']
@@ -223,10 +232,50 @@ step_cond = ConditionStep(
     else_steps=[]
 )
 
+func = Lambda(
+    function_name=lambda_function_name,
+    execution_role_arn=role,
+    script="scripts/lambda_step_getimage.py",
+    handler="lambda_step_getimage.handler",
+    timeout=600,
+    memory_size=128,
+)
+
+step_latest_model_fetch = LambdaStep(
+    name="fetchLatestModel",
+    lambda_func=func,
+    inputs={
+        "model_package_group_name": model_package_group_name,
+    },
+    outputs=[
+        LambdaOutput(output_name="ModelUrl", output_type=LambdaOutputTypeEnum.String), 
+        LambdaOutput(output_name="ImageUri", output_type=LambdaOutputTypeEnum.String), 
+        LambdaOutput(output_name="BaselineStatisticsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+        LambdaOutput(output_name="BaselineConstraintsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+    ],
+)
+
+model = Model(
+    image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
+    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+    sagemaker_session=pipeline_session,
+    role=role,
+)
+
+step_args = model.create(
+        instance_type="ml.m5.large",
+        accelerator_type="ml.eia1.medium",
+    )
+    
+step_create_model = ModelStep(
+        name=model_package_group_name,
+        step_args=step_args,
+    )
+
 
 pipeline = Pipeline(
     name = plname,
-    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
+    steps=[step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_create_model]
 )
 pipeline.upsert(role_arn=role)
 execution=pipeline.start()
