@@ -256,6 +256,7 @@ step_latest_model_fetch = LambdaStep(
 )
 
 model = Model(
+    name=model_package_group_name,
     image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
     model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
     sagemaker_session=pipeline_session,
@@ -268,7 +269,7 @@ step_args = model.create(
     )
     
 step_create_model = ModelStep(
-        name=model_package_group_name,
+        name=model_package_group_name + "-step",
         step_args=step_args,
     )
 
