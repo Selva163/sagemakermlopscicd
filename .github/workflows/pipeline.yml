@@ -26,4 +26,4 @@ jobs:
         AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
-        python pipeline_sample.py
+        python pipeline_sample.py 
