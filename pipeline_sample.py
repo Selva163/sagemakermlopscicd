@@ -245,6 +245,32 @@ step_evaluate = ProcessingStep(
 )
 step_evaluate.add_depends_on([step_train])
 
+
+model = Model(
+    name=model_package_group_name,
+    image_uri="683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3",
+    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+    sagemaker_session=pipeline_session,
+    role=role,
+)
+
+step_args = model.create(
+        instance_type="ml.m5.large",
+        accelerator_type="ml.eia1.medium",
+    )
+    
+step_create_model = ModelStep(
+        name=model_package_group_name + "-step",
+        step_args=step_args,
+    )
+
+model_config = ModelConfig(
+    model_name=step_create_model.properties.ModelName,
+    instance_count=1,
+    instance_type='ml.m5.large',
+)
+
+
 model_explainability_analysis_cfg_output_path = "s3://{}/{}/{}/{}".format(
     testbucket,
     base_job_prefix,
@@ -267,16 +293,13 @@ shap_config = SHAPConfig(
 
 model_explainability_check_config = ModelExplainabilityCheckConfig(
     data_config=model_explainability_data_config,
+    model_config = model_config,
     explainability_config=shap_config,
-)
-
-clarify_check_config = ClarifyCheckConfig(
-    data_config = model_explainability_data_config
 )
 
 model_explainability_check_step = ClarifyCheckStep(
     name="ModelExplainabilityCheckStep",
-    clarify_check_config=clarify_check_config,
+    clarify_check_config=model_explainability_check_config,
     check_job_config=check_job_config,
     skip_check=False,
     register_new_baseline=True,
@@ -325,6 +348,7 @@ step_cond = ConditionStep(
     else_steps=[]
 )
 
+
 # func = Lambda(
 #     function_name=lambda_function_name,
 #     execution_role_arn=role,
@@ -367,7 +391,7 @@ step_cond = ConditionStep(
 #     )
 
 # psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
-psteps = [step_process,step_train,data_quality_check_step,data_bias_check_step,step_evaluate,step_cond,data_bias_check_step,model_explainability_check_step]
+psteps = [step_process,step_train,data_quality_check_step,data_bias_check_step,step_evaluate,step_cond,data_bias_check_step,step_create_model,model_explainability_check_step]
 pipeline = Pipeline(
     name = plname,
     steps=psteps
