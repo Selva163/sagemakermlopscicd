@@ -28,6 +28,11 @@ from sagemaker.workflow.clarify_check_step import (
     ModelExplainabilityCheckConfig,
     SHAPConfig
 )
+from sagemaker.clarify import (
+    BiasConfig,
+    DataConfig,
+    ModelConfig
+)
 from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
 from sagemaker.workflow.condition_step import (
     ConditionStep
