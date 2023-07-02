@@ -19,6 +19,15 @@ from sagemaker.workflow.quality_check_step import (
     ModelQualityCheckConfig,
     QualityCheckStep,
 )
+from sagemaker.workflow.clarify_check_step import (
+    DataBiasCheckConfig,
+    ClarifyCheckStep,
+    ClarifyCheckConfig,
+    ModelBiasCheckConfig,
+    ModelPredictedLabelConfig,
+    ModelExplainabilityCheckConfig,
+    SHAPConfig
+)
 from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
 from sagemaker.workflow.condition_step import (
     ConditionStep
@@ -55,7 +64,7 @@ lambda_function_name = "get_latest_imageuri"
 dtimem = gmtime()
 fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
 experiment_name = 'sklearn-exp-101-'+fg_ts_str
-
+base_job_prefix = "clarify"
 
 sklearn_processor = SKLearnProcessor(
     framework_version="0.20.0", role=role, instance_type=processing_instance, instance_count=1
@@ -74,7 +83,7 @@ def get_pipeline_session(region, default_bucket):
         sagemaker_client=sagemaker_client,
         default_bucket=default_bucket,
     )
-pipeline_session = get_pipeline_session(region, default_bucket)
+pipeline_session = get_pipeline_session(region, testbucket)
 
 input_data = "s3://sagemaker-sample-data-{}/processing/census/census-income.csv".format(region)
 
@@ -127,7 +136,7 @@ check_job_config = CheckJobConfig(
 data_quality_check_config = DataQualityCheckConfig(
     baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri,
     dataset_format=DatasetFormat.csv(header=False),
-    output_s3_uri=Join(on='/', values=['s3:/', default_bucket, 'baselinejob', ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
+    output_s3_uri=Join(on='/', values=['s3:/', testbucket, 'baselinejob', ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
 )
 
 data_quality_check_step = QualityCheckStep(
@@ -150,6 +159,37 @@ drift_check_baselines = DriftCheckBaselines(
         content_type="application/json",
     )
 )
+
+
+data_bias_analysis_cfg_output_path = f"s3://{testbucket}/{base_job_prefix}/databiascheckstep/analysis_cfg"
+
+data_bias_data_config = DataConfig(
+    s3_data_input_path=step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri,
+    s3_output_path=Join(on='/', values=['s3:/', testbucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'databiascheckstep']),
+    label="income",
+    dataset_type="text/csv",
+    s3_analysis_config_output_path=data_bias_analysis_cfg_output_path,
+)
+
+# We are using this bias config to configure clarify to detect bias based on the first feature in the featurized vector for Sex
+data_bias_config = BiasConfig(
+    label_values_or_threshold=[0.0], facet_name=['onehotencoder__major industry code_ Agriculture'], facet_values_or_threshold=[[1]]
+)
+
+data_bias_check_config = DataBiasCheckConfig(
+    data_config=data_bias_data_config,
+    data_bias_config=data_bias_config,
+)
+
+data_bias_check_step = ClarifyCheckStep(
+    name="DataBiasCheckStep",
+    clarify_check_config=data_bias_check_config,
+    check_job_config=check_job_config,
+    skip_check=False,
+    register_new_baseline=True,
+    model_package_group_name=model_package_group_name
+)
+
 
 evaluation_report = PropertyFile(
     name="EvaluationReport",
@@ -178,6 +218,19 @@ step_evaluate = ProcessingStep(
                 ],
             ),
         ),
+        ProcessingOutput(
+            output_name="predictions",
+            source="/opt/ml/processing/prediction",
+            destination=Join(
+                on="/",
+                values=[
+                    "s3://{}".format(testbucket),
+                    'incomemodel',
+                    ExecutionVariables.PIPELINE_EXECUTION_ID,
+                    "predictions",
+                ],
+            ),
+        )
     ],
     property_files=[evaluation_report],
     job_arguments = ['--testbucket', testbucket,
@@ -187,6 +240,43 @@ step_evaluate = ProcessingStep(
 )
 step_evaluate.add_depends_on([step_train])
 
+model_explainability_analysis_cfg_output_path = "s3://{}/{}/{}/{}".format(
+    testbucket,
+    base_job_prefix,
+    "modelexplainabilitycheckstep",
+    "analysis_cfg"
+)
+
+model_explainability_data_config = DataConfig(
+    s3_data_input_path=step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][1]["S3Output"]["S3Uri"],
+    s3_output_path=Join(on='/', values=['s3:/', testbucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'modelexplainabilitycheckstep']),
+    s3_analysis_config_output_path=model_explainability_analysis_cfg_output_path,
+    label="income",
+    predicted_label="income_pred",
+    dataset_type="text/csv",
+)
+shap_config = SHAPConfig(
+    seed=123,
+    num_samples=100
+)
+
+model_explainability_check_config = ModelExplainabilityCheckConfig(
+    data_config=model_explainability_data_config,
+    explainability_config=shap_config,
+)
+
+clarify_check_config = ClarifyCheckConfig(
+    data_config = model_explainability_data_config
+)
+
+model_explainability_check_step = ClarifyCheckStep(
+    name="ModelExplainabilityCheckStep",
+    clarify_check_config=clarify_check_config,
+    check_job_config=check_job_config,
+    skip_check=False,
+    register_new_baseline=True,
+    model_package_group_name=model_package_group_name
+)
 
 model_metrics = ModelMetrics(
     model_statistics=MetricsSource(
@@ -230,49 +320,49 @@ step_cond = ConditionStep(
     else_steps=[]
 )
 
-func = Lambda(
-    function_name=lambda_function_name,
-    execution_role_arn=role,
-    script="scripts/lambda_step_getimage.py",
-    handler="lambda_step_getimage.handler",
-    timeout=600,
-    memory_size=128,
-)
+# func = Lambda(
+#     function_name=lambda_function_name,
+#     execution_role_arn=role,
+#     script="scripts/lambda_step_getimage.py",
+#     handler="lambda_step_getimage.handler",
+#     timeout=600,
+#     memory_size=128,
+# )
 
-step_latest_model_fetch = LambdaStep(
-    name="fetchLatestModel",
-    lambda_func=func,
-    inputs={
-        "model_package_group_name": model_package_group_name,
-    },
-    outputs=[
-        LambdaOutput(output_name="ModelUrl", output_type=LambdaOutputTypeEnum.String), 
-        LambdaOutput(output_name="ImageUri", output_type=LambdaOutputTypeEnum.String), 
-        LambdaOutput(output_name="BaselineStatisticsS3Uri", output_type=LambdaOutputTypeEnum.String), 
-        LambdaOutput(output_name="BaselineConstraintsS3Uri", output_type=LambdaOutputTypeEnum.String), 
-    ],
-)
+# step_latest_model_fetch = LambdaStep(
+#     name="fetchLatestModel",
+#     lambda_func=func,
+#     inputs={
+#         "model_package_group_name": model_package_group_name,
+#     },
+#     outputs=[
+#         LambdaOutput(output_name="ModelUrl", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="ImageUri", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="BaselineStatisticsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="BaselineConstraintsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+#     ],
+# )
 
-model = Model(
-    name=model_package_group_name,
-    image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
-    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
-    sagemaker_session=pipeline_session,
-    role=role,
-)
+# model = Model(
+#     name=model_package_group_name,
+#     image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
+#     model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+#     sagemaker_session=pipeline_session,
+#     role=role,
+# )
 
-step_args = model.create(
-        instance_type="ml.m5.large",
-        accelerator_type="ml.eia1.medium",
-    )
+# step_args = model.create(
+#         instance_type="ml.m5.large",
+#         accelerator_type="ml.eia1.medium",
+#     )
     
-step_create_model = ModelStep(
-        name=model_package_group_name + "-step",
-        step_args=step_args,
-    )
+# step_create_model = ModelStep(
+#         name=model_package_group_name + "-step",
+#         step_args=step_args,
+#     )
 
 # psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
-psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
+psteps = [step_process,step_train,data_quality_check_step,data_bias_check_step,step_evaluate,step_cond,data_bias_check_step,model_explainability_check_step]
 pipeline = Pipeline(
     name = plname,
     steps=psteps

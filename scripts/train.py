@@ -35,7 +35,7 @@ if __name__ == "__main__":
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
     train_labels_data = os.path.join(training_data_directory, "train_labels.csv")
     print("Reading input data")
-    X_train = pd.read_csv(train_features_data, header=None)
+    X_train = pd.read_csv(train_features_data).drop("income", axis=1)
     y_train = pd.read_csv(train_labels_data, header=None)
 
     logreg=LogisticRegression(solver = 'liblinear')

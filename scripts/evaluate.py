@@ -57,7 +57,7 @@ if __name__ == "__main__":
     test_features_data = os.path.join("/opt/ml/processing/test", "test_features.csv")
     test_labels_data = os.path.join("/opt/ml/processing/test", "test_labels.csv")
 
-    X_test = pd.read_csv(test_features_data, header=None)
+    X_test = pd.read_csv(test_features_data).drop("income", axis=1)
     y_test = pd.read_csv(test_labels_data, header=None)
 
     predictions = model.predict(X_test)
@@ -105,6 +105,11 @@ if __name__ == "__main__":
     evaluation_path = f"{output_dir}/evaluation.json"
     with open(evaluation_path, "w") as f:
         f.write(json.dumps(report_dict))
+    
+    preds_output_path = os.path.join("/opt/ml/processing/prediction", "predictions.csv")
+    X_test["income"] = y_test
+    X_test["income_pred"] = predictions
+    X_test.to_csv(preds_output_path, index=False)
     
     if args.runtype == "test":
         s3 = boto3.resource('s3')

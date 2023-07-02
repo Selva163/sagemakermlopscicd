@@ -96,10 +96,14 @@ if __name__ == "__main__":
     test_labels_output_path = os.path.join("/opt/ml/processing/test", "test_labels.csv")
 
     print("Saving training features to {}".format(train_features_output_path))
-    pd.DataFrame(train_features).to_csv(train_features_output_path, header=False, index=False)
+    adf = pd.DataFrame(train_features,columns=preprocess.get_feature_names_out())
+    adf['income'] = y_train
+    adf.to_csv(train_features_output_path, header=False, index=False)
 
     print("Saving test features to {}".format(test_features_output_path))
-    pd.DataFrame(test_features).to_csv(test_features_output_path, header=False, index=False)
+    adf = pd.DataFrame(test_features,columns=preprocess.get_feature_names_out())
+    adf['income'] = y_test
+    adf.to_csv(test_features_output_path, header=False, index=False)
 
     print("Saving training labels to {}".format(train_labels_output_path))
     y_train.to_csv(train_labels_output_path, header=False, index=False)
@@ -123,11 +127,6 @@ if __name__ == "__main__":
         pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
         s3_resource = boto3.resource('s3')
         s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
-
-        csv_buffer21 = StringIO()
-        pd.DataFrame(test_features).to_csv(csv_buffer21, index=False)
-        s3_resource = boto3.resource('s3')
-        s3_resource.Object(bucket, 'test_features_raw.csv').put(Body=csv_buffer21.getvalue())
         
         csv_buffer3 = StringIO()
         y_test.to_csv(csv_buffer3, header=False, index=False)
