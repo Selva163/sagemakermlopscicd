@@ -240,7 +240,7 @@ step_register = RegisterModel(
     model_metrics=model_metrics,
     drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for churn prediction",
-    tags=[{"team": "mlops", "reason":"churn analysis", "metric":"accuracy"}]
+    tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ]
 )
 
 step_register3 = RegisterModel(
@@ -255,7 +255,7 @@ step_register3 = RegisterModel(
     model_metrics=model_metrics,
     drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for ppo",
-    tags=[{"team": "mme", "reason":"ppo", "metric":"recall"}]
+    tags=[{"Key":"team", "Value":"mme"},{"Key":"reason", "Value":"ppo"},{"Key":"metric", "Value":"recall"} ]
 )
 
 step_register1 = RegisterModel(
@@ -270,7 +270,7 @@ step_register1 = RegisterModel(
     model_metrics=model_metrics,
     drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for churn prediction",
-    tags=[{"team": "rr", "reason":"churn analysis", "metric":"precision"}]
+    tags=[{"Key":"team", "Value":"rr"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"precision"} ]
 )
 
 step_register2 = RegisterModel(
@@ -285,7 +285,7 @@ step_register2 = RegisterModel(
     model_metrics=model_metrics,
     drift_check_baselines=drift_check_baselines,
     description="xgboost classification model for churn prediction",
-    tags=[{"team": "ucd", "reason":"churn analysis", "metric":"roc"}]
+    tags=[{"Key":"team", "Value":"ucd"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"roc"} ]
 )
 cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
@@ -311,4 +311,4 @@ pipeline = Pipeline(
     steps=psteps
 )
 pipeline.upsert(role_arn=role)
-# execution=pipeline.start()
+execution=pipeline.start()
