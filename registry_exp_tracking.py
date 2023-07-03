@@ -305,7 +305,7 @@ step_cond = ConditionStep(
 
 
 # psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
-psteps = [step_process,step_train,data_quality_check_step,data_bias_check_step,step_evaluate,step_cond]
+psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
 pipeline = Pipeline(
     name = plname,
     steps=psteps
