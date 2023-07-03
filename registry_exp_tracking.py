@@ -72,7 +72,7 @@ experiment_name = 'sklearn-exp-track-'+fg_ts_str
 base_job_prefix = "clarify"
 
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.20.0", role=role, instance_type=processing_instance, instance_count=1
+    framework_version="1.2-1", role=role, instance_type=processing_instance, instance_count=1
 )
 
 sagemaker_session = sagemaker.Session()
@@ -108,7 +108,7 @@ step_process = ProcessingStep(
 
 sklearn = SKLearn(
     entry_point="scripts/train.py", 
-    framework_version="0.23-1", 
+    framework_version="1.2-1", 
     instance_type=training_instance, 
     role=role, 
     base_job_name="training",
