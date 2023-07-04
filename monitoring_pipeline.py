@@ -91,8 +91,26 @@ check_job_config = CheckJobConfig(
             }
     )
 
+sklearn_processor = SKLearnProcessor(
+    framework_version="1.2-1", role=role, instance_type="ml.t3.medium", instance_count=1
+)
+
+step_process = ProcessingStep(
+    name="LoadInferenceData",
+    code="scripts/process.py",
+    processor=sklearn_processor,
+    inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
+    outputs=[
+        ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
+        ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+    ],
+    job_arguments = ['--train-test-split-ratio', '0.2', 
+    '--testbucket', testbucket
+    ]
+)
+
 data_quality_check_config = DataQualityCheckConfig(
-        baseline_dataset=f's3://{testbucket}/test_features.csv',
+        baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, 
         dataset_format=DatasetFormat.csv(header=False),
         output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
         post_analytics_processor_script='scripts/postprocess_monitor_script.py',
