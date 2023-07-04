@@ -42,7 +42,7 @@ batch_data = ParameterString(
 )
 model_package_group_name = 'sklearn-check-model-reg'
 lambda_function_name = "get-latest-version"
-pipeline_name = "inference-pipeline"
+pipeline_name = "monitoring-pipeline"
 
 def get_pipeline_session(region, default_bucket):
     boto_session = boto3.Session(region_name=region)
@@ -79,23 +79,35 @@ step_latest_model_fetch = LambdaStep(
     ],
 )
 
+check_job_config = CheckJobConfig(
+        role=role,
+        instance_count=1,
+        instance_type="ml.c5.xlarge",
+        volume_size_in_gb=120,
+        sagemaker_session=pipeline_session,
+        env = {
+                "PipelineName": pipeline_name,
+                "Region": region,
+            }
+    )
 
-sklearn_processor = SKLearnProcessor(
-    framework_version="0.23-1", role=role, instance_type="ml.t3.medium", instance_count=1
-)
+data_quality_check_config = DataQualityCheckConfig(
+        baseline_dataset=f's3://{testbucket}/test_features.csv',
+        dataset_format=DatasetFormat.csv(header=False),
+        output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
+        post_analytics_processor_script='scripts/postprocess_monitor_script.py',
+    )
 
-step_infer = ProcessingStep(
-    name="Inference",
-    code="scripts/score.py",
-    processor=sklearn_processor,
-    inputs=[
-            ProcessingInput(
-                source=step_latest_model_fetch.properties.Outputs["ModelUrl"],
-                destination="/opt/ml/processing/model",
-            )
-    ],
-    job_arguments = ['--testbucket', testbucket
-    ]
+data_quality_check_step = QualityCheckStep(
+    name="DataQualityCheckStep",
+    skip_check=False,
+    register_new_baseline=False,
+    quality_check_config=data_quality_check_config,
+    check_job_config=check_job_config,
+    supplied_baseline_statistics=step_latest_model_fetch.properties.Outputs["BaselineStatisticsS3Uri"],
+    supplied_baseline_constraints=step_latest_model_fetch.properties.Outputs["BaselineConstraintsS3Uri"],
+    model_package_group_name=model_package_group_name,
+    fail_on_violation=False
 )
 
 pipeline = Pipeline(
@@ -103,7 +115,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, step_infer],
+    steps=[step_latest_model_fetch,data_quality_check_step],
 )
 
 import json

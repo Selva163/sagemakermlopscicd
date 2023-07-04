@@ -60,8 +60,8 @@ if __name__ == "__main__":
         for hr in hypertuning_results_list:
             dtimem = gmtime()
             fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
-            run_name = "run-"+fg_ts_str
-            with Run(experiment_name=args.experiment_name,experiment_display_name="-".join(args.experiment_name.split('-')[:-1]), run_name=run_name, sagemaker_session=sagemaker_session) as run:
+            run_name = "train-"+fg_ts_str
+            with Run(experiment_name=args.experiment_name, run_name=run_name, sagemaker_session=sagemaker_session) as run:
                 run.log_parameters(
                     {"C": hr[0], "solver": hr[1], "penalty": hr[2], "runtype": 'train', 'device':'cpu'}
                     )
