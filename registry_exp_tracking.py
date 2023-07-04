@@ -71,6 +71,17 @@ fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
 experiment_name = 'sklearn-exp-track-'+fg_ts_str
 base_job_prefix = "clarify"
 
+sm_client = boto3.client('sagemaker', region_name=region)
+mpg_list = [
+    {"ModelPackageGroupName" : "logistic-regression-ppo","ModelPackageGroupDescription" : "private offers", "Tags" : [{'Key': 'team','Value': 'mlops'}]},
+    {"ModelPackageGroupName" : "xgboost-churn","ModelPackageGroupDescription" : "churn prediction", "Tags": [{'Key': 'team','Value': 'mme'}]},
+    {"ModelPackageGroupName" : "logistic-regression-churn","ModelPackageGroupDescription" : "churn prediction", "Tags": [{'Key': 'team','Value': 'ucd'}]},
+    {"ModelPackageGroupName" : "random-forest-va","ModelPackageGroupDescription" : "vehicle affinity", "Tags": [{'Key': 'team','Value': 'rr'}]}
+]
+
+for mpg in mpg_list:
+    create_mpg_response = sm_client.create_model_package_group(**mpg)
+
 sklearn_processor = SKLearnProcessor(
     framework_version="1.2-1", role=role, instance_type=processing_instance, instance_count=1
 )
@@ -236,7 +247,7 @@ step_register = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name=model_package_group_name,
+    model_package_group_name="logistic-regression-ppo",
     model_metrics=model_metrics,
     description="Logistic regression model for churn prediction",
     tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ]
@@ -250,7 +261,7 @@ step_register3 = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="ppo-test",
+    model_package_group_name="xgboost-churn",
     model_metrics=model_metrics,
     description="Logistic regression model for ppo",
     tags=[{"Key":"team", "Value":"mme"},{"Key":"reason", "Value":"ppo"},{"Key":"metric", "Value":"recall"} ]
@@ -264,7 +275,7 @@ step_register1 = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name=model_package_group_name,
+    model_package_group_name="logistic-regression-churn",
     model_metrics=model_metrics,
     description="Logistic regression model for churn prediction",
     tags=[{"Key":"team", "Value":"rr"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"precision"} ]
@@ -278,7 +289,7 @@ step_register2 = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="xgboost model",
+    model_package_group_name="random-forest-va",
     model_metrics=model_metrics,
     description="xgboost classification model for churn prediction",
     tags=[{"Key":"team", "Value":"ucd"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"roc"} ]
