@@ -80,7 +80,13 @@ mpg_list = [
 ]
 
 for mpg in mpg_list:
-    create_mpg_response = sm_client.create_model_package_group(**mpg)
+    try:
+        create_mpg_response = sm_client.create_model_package_group(**mpg)
+    except Exception as e:
+        if 'Model Package Group already exists' in str(e):
+            pass 
+        else:
+            raise(e)
 
 sklearn_processor = SKLearnProcessor(
     framework_version="1.2-1", role=role, instance_type=processing_instance, instance_count=1
