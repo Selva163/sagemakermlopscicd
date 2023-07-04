@@ -239,6 +239,7 @@ model_metrics = ModelMetrics(
     )
 )
 
+
 step_register = RegisterModel(
     name="RegisterModel",
     estimator=sklearn,
@@ -250,50 +251,11 @@ step_register = RegisterModel(
     model_package_group_name="logistic-regression-ppo",
     model_metrics=model_metrics,
     description="Logistic regression model for churn prediction",
-    tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ]
+    tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ],
+    customer_metadata_properties={"Run":"exp-track-test","Created by":"selva"}
 )
 
-step_register3 = RegisterModel(
-    name="RegisterModel3",
-    estimator=sklearn,
-    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
-    content_types=["text/csv"],
-    response_types=["text/csv"],
-    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
-    transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="xgboost-churn",
-    model_metrics=model_metrics,
-    description="Logistic regression model for ppo",
-    tags=[{"Key":"team", "Value":"mme"},{"Key":"reason", "Value":"ppo"},{"Key":"metric", "Value":"recall"} ]
-)
 
-step_register1 = RegisterModel(
-    name="RegisterModel1",
-    estimator=sklearn,
-    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
-    content_types=["text/csv"],
-    response_types=["text/csv"],
-    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
-    transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="logistic-regression-churn",
-    model_metrics=model_metrics,
-    description="Logistic regression model for churn prediction",
-    tags=[{"Key":"team", "Value":"rr"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"precision"} ]
-)
-
-step_register2 = RegisterModel(
-    name="RegisterModel2",
-    estimator=sklearn,
-    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
-    content_types=["text/csv"],
-    response_types=["text/csv"],
-    inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
-    transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="random-forest-va",
-    model_metrics=model_metrics,
-    description="xgboost classification model for churn prediction",
-    tags=[{"Key":"team", "Value":"ucd"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"roc"} ]
-)
 cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
             step_name=step_evaluate.name,
@@ -306,7 +268,7 @@ cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
 step_cond = ConditionStep(
     name="MetricCheckForModelRegister",
     conditions=[cond_gte],
-    if_steps=[step_register, step_register1, step_register2, step_register3],
+    if_steps=[step_register],
     else_steps=[]
 )
 
