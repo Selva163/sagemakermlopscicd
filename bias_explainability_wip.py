@@ -68,15 +68,12 @@ plname = "test102"
 lambda_function_name = "get_latest_imageuri"
 dtimem = gmtime()
 fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
-experiment_name = 'sklearn-exp-track-'+fg_ts_str
+experiment_name = 'sklearn-exp-101-'+fg_ts_str
 base_job_prefix = "clarify"
 
 sm_client = boto3.client('sagemaker', region_name=region)
 mpg_list = [
-    {"ModelPackageGroupName" : "logistic-regression-ppo","ModelPackageGroupDescription" : "private offers", "Tags" : [{'Key': 'team','Value': 'mlops'}]},
-    {"ModelPackageGroupName" : "xgboost-churn","ModelPackageGroupDescription" : "churn prediction", "Tags": [{'Key': 'team','Value': 'mme'}]},
-    {"ModelPackageGroupName" : "logistic-regression-churn","ModelPackageGroupDescription" : "churn prediction", "Tags": [{'Key': 'team','Value': 'ucd'}]},
-    {"ModelPackageGroupName" : "random-forest-va","ModelPackageGroupDescription" : "vehicle affinity", "Tags": [{'Key': 'team','Value': 'rr'}]}
+    {"ModelPackageGroupName" : model_package_group_name,"ModelPackageGroupDescription" : "income prediction", "Tags" : [{'Key': 'team','Value': 'mlops'}]}
 ]
 
 for mpg in mpg_list:
@@ -89,7 +86,7 @@ for mpg in mpg_list:
             raise(e)
 
 sklearn_processor = SKLearnProcessor(
-    framework_version="1.2-1", role=role, instance_type=processing_instance, instance_count=1
+    framework_version="0.20.0", role=role, instance_type=processing_instance, instance_count=1
 )
 
 sagemaker_session = sagemaker.Session()
@@ -125,7 +122,7 @@ step_process = ProcessingStep(
 
 sklearn = SKLearn(
     entry_point="scripts/train.py", 
-    framework_version="1.2-1", 
+    framework_version="0.23-1", 
     instance_type=training_instance, 
     role=role, 
     base_job_name="training",
@@ -182,6 +179,37 @@ drift_check_baselines = DriftCheckBaselines(
     )
 )
 
+
+data_bias_analysis_cfg_output_path = f"s3://{testbucket}/{base_job_prefix}/databiascheckstep/analysis_cfg"
+
+data_bias_data_config = DataConfig(
+    s3_data_input_path=step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri,
+    s3_output_path=Join(on='/', values=['s3:/', testbucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'databiascheckstep']),
+    label="income",
+    dataset_type="text/csv",
+    s3_analysis_config_output_path=data_bias_analysis_cfg_output_path,
+)
+
+# We are using this bias config to configure clarify to detect bias based on the first feature in the featurized vector for Sex
+data_bias_config = BiasConfig(
+    label_values_or_threshold=[0.0], facet_name=['onehotencoder__major industry code_ Agriculture'], facet_values_or_threshold=[[1]]
+)
+
+data_bias_check_config = DataBiasCheckConfig(
+    data_config=data_bias_data_config,
+    data_bias_config=data_bias_config,
+)
+
+data_bias_check_step = ClarifyCheckStep(
+    name="DataBiasCheckStep",
+    clarify_check_config=data_bias_check_config,
+    check_job_config=check_job_config,
+    skip_check=False,
+    register_new_baseline=True,
+    model_package_group_name=model_package_group_name
+)
+
+
 evaluation_report = PropertyFile(
     name="EvaluationReport",
     output_name="evaluation",
@@ -232,6 +260,66 @@ step_evaluate = ProcessingStep(
 step_evaluate.add_depends_on([step_train])
 
 
+model = Model(
+    name=model_package_group_name,
+    image_uri="683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3",
+    model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+    sagemaker_session=pipeline_session,
+    role=role,
+)
+
+step_args = model.create(
+        instance_type="ml.m5.large",
+        accelerator_type="ml.eia1.medium",
+    )
+    
+step_create_model = ModelStep(
+        name=model_package_group_name + "-step",
+        step_args=step_args,
+    )
+
+model_config = ModelConfig(
+    model_name=step_create_model.properties.ModelName,
+    instance_count=1,
+    instance_type='ml.m5.large',
+)
+
+
+model_explainability_analysis_cfg_output_path = "s3://{}/{}/{}/{}".format(
+    testbucket,
+    base_job_prefix,
+    "modelexplainabilitycheckstep",
+    "analysis_cfg"
+)
+
+model_explainability_data_config = DataConfig(
+    s3_data_input_path=step_evaluate.arguments["ProcessingOutputConfig"]["Outputs"][1]["S3Output"]["S3Uri"],
+    s3_output_path=Join(on='/', values=['s3:/', testbucket, base_job_prefix, ExecutionVariables.PIPELINE_EXECUTION_ID, 'modelexplainabilitycheckstep']),
+    s3_analysis_config_output_path=model_explainability_analysis_cfg_output_path,
+    label="income",
+    predicted_label="income_pred",
+    dataset_type="text/csv",
+)
+shap_config = SHAPConfig(
+    seed=123,
+    num_samples=100
+)
+
+model_explainability_check_config = ModelExplainabilityCheckConfig(
+    data_config=model_explainability_data_config,
+    model_config = model_config,
+    explainability_config=shap_config,
+)
+
+model_explainability_check_step = ClarifyCheckStep(
+    name="ModelExplainabilityCheckStep",
+    clarify_check_config=model_explainability_check_config,
+    check_job_config=check_job_config,
+    skip_check=False,
+    register_new_baseline=True,
+    model_package_group_name=model_package_group_name
+)
+
 model_metrics = ModelMetrics(
     model_statistics=MetricsSource(
         s3_uri=Join(
@@ -245,7 +333,6 @@ model_metrics = ModelMetrics(
     )
 )
 
-
 step_register = RegisterModel(
     name="RegisterModel",
     estimator=sklearn,
@@ -254,13 +341,11 @@ step_register = RegisterModel(
     response_types=["text/csv"],
     inference_instances=["ml.t2.medium", "ml.m5.xlarge"],
     transform_instances=["ml.m5.xlarge"],
-    model_package_group_name="logistic-regression-ppo",
+    model_package_group_name=model_package_group_name,
     model_metrics=model_metrics,
-    description="Logistic regression model for churn prediction",
-    tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ],
+    drift_check_baselines=drift_check_baselines,
     customer_metadata_properties={"Run":"exp-track-test","Created by":"selva"}
 )
-
 
 cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
         left=JsonGet(
@@ -268,7 +353,7 @@ cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
             property_file=evaluation_report,
             json_path="binary_classification_metrics.roc_auc.value",  # This should follow the structure of your report_dict defined in the evaluate.py file.
         ),
-        right=0.1,  # You can change the threshold here
+        right=0.7,  # You can change the threshold here
 )
 
 step_cond = ConditionStep(
@@ -279,11 +364,52 @@ step_cond = ConditionStep(
 )
 
 
+# func = Lambda(
+#     function_name=lambda_function_name,
+#     execution_role_arn=role,
+#     script="scripts/lambda_step_getimage.py",
+#     handler="lambda_step_getimage.handler",
+#     timeout=600,
+#     memory_size=128,
+# )
+
+# step_latest_model_fetch = LambdaStep(
+#     name="fetchLatestModel",
+#     lambda_func=func,
+#     inputs={
+#         "model_package_group_name": model_package_group_name,
+#     },
+#     outputs=[
+#         LambdaOutput(output_name="ModelUrl", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="ImageUri", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="BaselineStatisticsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+#         LambdaOutput(output_name="BaselineConstraintsS3Uri", output_type=LambdaOutputTypeEnum.String), 
+#     ],
+# )
+
+# model = Model(
+#     name=model_package_group_name,
+#     image_uri=step_latest_model_fetch.properties.Outputs["ImageUri"],
+#     model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+#     sagemaker_session=pipeline_session,
+#     role=role,
+# )
+
+# step_args = model.create(
+#         instance_type="ml.m5.large",
+#         accelerator_type="ml.eia1.medium",
+#     )
+    
+# step_create_model = ModelStep(
+#         name=model_package_group_name + "-step",
+#         step_args=step_args,
+#     )
+
 # psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
-psteps = [step_process,step_train,step_evaluate,step_cond]
+psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
 pipeline = Pipeline(
     name = plname,
     steps=psteps
 )
 pipeline.upsert(role_arn=role)
-execution=pipeline.start()
+# execution=pipeline.start()
