@@ -238,7 +238,6 @@ step_register = RegisterModel(
     transform_instances=["ml.m5.xlarge"],
     model_package_group_name=model_package_group_name,
     model_metrics=model_metrics,
-    drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for churn prediction",
     tags=[{"Key":"team", "Value":"mlops"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"accuracy"} ]
 )
@@ -253,7 +252,6 @@ step_register3 = RegisterModel(
     transform_instances=["ml.m5.xlarge"],
     model_package_group_name="ppo-test",
     model_metrics=model_metrics,
-    drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for ppo",
     tags=[{"Key":"team", "Value":"mme"},{"Key":"reason", "Value":"ppo"},{"Key":"metric", "Value":"recall"} ]
 )
@@ -268,7 +266,6 @@ step_register1 = RegisterModel(
     transform_instances=["ml.m5.xlarge"],
     model_package_group_name=model_package_group_name,
     model_metrics=model_metrics,
-    drift_check_baselines=drift_check_baselines,
     description="Logistic regression model for churn prediction",
     tags=[{"Key":"team", "Value":"rr"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"precision"} ]
 )
@@ -283,7 +280,6 @@ step_register2 = RegisterModel(
     transform_instances=["ml.m5.xlarge"],
     model_package_group_name="xgboost model",
     model_metrics=model_metrics,
-    drift_check_baselines=drift_check_baselines,
     description="xgboost classification model for churn prediction",
     tags=[{"Key":"team", "Value":"ucd"},{"Key":"reason", "Value":"churn analysis"},{"Key":"metric", "Value":"roc"} ]
 )
@@ -305,7 +301,7 @@ step_cond = ConditionStep(
 
 
 # psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond,step_latest_model_fetch,step_create_model]
-psteps = [step_process,step_train,data_quality_check_step,step_evaluate,step_cond]
+psteps = [step_process,step_train,step_evaluate,step_cond]
 pipeline = Pipeline(
     name = plname,
     steps=psteps
