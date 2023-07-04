@@ -88,7 +88,6 @@ step_process = ProcessingStep(
     name="LoadInferenceData",
     code="scripts/process.py",
     processor=sklearn_processor,
-    inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
     outputs=[
         ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
         ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
@@ -106,7 +105,11 @@ step_infer = ProcessingStep(
             ProcessingInput(
                 source=step_latest_model_fetch.properties.Outputs["ModelUrl"],
                 destination="/opt/ml/processing/model",
-            )
+                ),
+            ProcessingInput(
+                source=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, 
+                destination="/opt/ml/processing/test"
+                )
     ],
     job_arguments = ['--testbucket', testbucket
     ]

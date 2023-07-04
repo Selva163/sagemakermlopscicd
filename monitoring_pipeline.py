@@ -99,7 +99,6 @@ step_process = ProcessingStep(
     name="LoadInferenceData",
     code="scripts/process.py",
     processor=sklearn_processor,
-    inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
     outputs=[
         ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
         ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
