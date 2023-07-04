@@ -132,7 +132,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch,data_quality_check_step],
+    steps=[step_latest_model_fetch,step_process,data_quality_check_step],
 )
 
 import json

@@ -120,7 +120,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, step_infer],
+    steps=[step_latest_model_fetch, step_process, step_infer],
 )
 
 import json
