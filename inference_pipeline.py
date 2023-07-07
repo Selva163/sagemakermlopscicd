@@ -107,7 +107,7 @@ step_infer = ProcessingStep(
                 destination="/opt/ml/processing/model",
                 ),
             ProcessingInput(
-                source=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, 
+                source=f"s3://{testbucket}/inferencedata/income/", 
                 destination="/opt/ml/processing/test"
                 )
     ],
@@ -120,7 +120,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, step_process, step_infer],
+    steps=[step_latest_model_fetch, step_infer],
 )
 
 import json

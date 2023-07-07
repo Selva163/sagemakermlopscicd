@@ -109,7 +109,7 @@ step_process = ProcessingStep(
 )
 
 data_quality_check_config = DataQualityCheckConfig(
-        baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, 
+        baseline_dataset=f"s3://{testbucket}/inferencedata/income/", 
         dataset_format=DatasetFormat.csv(header=False),
         output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
         post_analytics_processor_script='scripts/postprocess_monitor_script.py',
@@ -132,7 +132,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch,step_process,data_quality_check_step],
+    steps=[step_latest_model_fetch,data_quality_check_step],
 )
 
 import json
