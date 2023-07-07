@@ -162,7 +162,7 @@ check_job_config = CheckJobConfig(
 
 data_quality_check_config = DataQualityCheckConfig(
     baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["monitor"].S3Output.S3Uri,
-    dataset_format=DatasetFormat.csv(header=False),
+    dataset_format=DatasetFormat.csv(header=True),
     output_s3_uri=Join(on='/', values=['s3:/', testbucket, 'baselinejob', ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
 )
 

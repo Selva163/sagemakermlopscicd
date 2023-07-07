@@ -110,7 +110,7 @@ step_process = ProcessingStep(
 
 data_quality_check_config = DataQualityCheckConfig(
         baseline_dataset=f"s3://{testbucket}/inferencedata/income/", 
-        dataset_format=DatasetFormat.csv(header=False),
+        dataset_format=DatasetFormat.csv(header=True),
         output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
         post_analytics_processor_script='scripts/postprocess_monitor_script.py',
     )
