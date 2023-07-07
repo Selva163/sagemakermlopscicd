@@ -90,17 +90,21 @@ if __name__ == "__main__":
     print(pd.DataFrame(test_features).columns)
     train_features_output_path = os.path.join("/opt/ml/processing/train", "train_features.csv")
     train_labels_output_path = os.path.join("/opt/ml/processing/train", "train_labels.csv")
+    baseline_output_path = os.path.join("/opt/ml/processing/monitor", "train_features.csv")
+    infer_output_path = os.path.join("/opt/ml/processing/infer", "test_features.csv")
 
     test_features_output_path = os.path.join("/opt/ml/processing/test", "test_features.csv")
     test_labels_output_path = os.path.join("/opt/ml/processing/test", "test_labels.csv")
 
     print("Saving training features to {}".format(train_features_output_path))
     adf = pd.DataFrame(train_features,columns=preprocess.get_feature_names_out())
+    adf.to_csv(baseline_output_path, index=False)
     adf['income'] = y_train
     adf.to_csv(train_features_output_path, index=False)
 
     print("Saving test features to {}".format(test_features_output_path))
     adf = pd.DataFrame(test_features,columns=preprocess.get_feature_names_out())
+    adf.to_csv(infer_output_path, index=False)
     adf['income'] = y_test
     adf.to_csv(test_features_output_path, index=False)
 

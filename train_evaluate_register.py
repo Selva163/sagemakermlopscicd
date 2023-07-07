@@ -114,6 +114,14 @@ step_process = ProcessingStep(
     outputs=[
         ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
         ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+        ProcessingOutput(output_name="monitor", source="/opt/ml/processing/monitor"),
+        ProcessingOutput(output_name="infer", source="/opt/ml/processing/infer", destination=Join(
+                on="/",
+                values=[
+                    "s3://{}".format(testbucket),
+                    'inferencedata',
+                    "income",
+                ])),
     ],
     job_arguments = ['--train-test-split-ratio', '0.2', 
     '--testbucket', testbucket
@@ -153,7 +161,7 @@ check_job_config = CheckJobConfig(
 )
 
 data_quality_check_config = DataQualityCheckConfig(
-    baseline_dataset=Join(on='/', values=[step_process.properties.ProcessingOutputConfig.Outputs["train_data"].S3Output.S3Uri , "/train_features.csv"]),
+    baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["monitor"].S3Output.S3Uri,
     dataset_format=DatasetFormat.csv(header=False),
     output_s3_uri=Join(on='/', values=['s3:/', testbucket, 'baselinejob', ExecutionVariables.PIPELINE_EXECUTION_ID, 'dataqualitycheckstep'])
 )
