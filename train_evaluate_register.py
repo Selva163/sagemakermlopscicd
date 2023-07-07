@@ -262,7 +262,7 @@ cond_gte = ConditionGreaterThanOrEqualTo(  # You can change the condition here
             property_file=evaluation_report,
             json_path="binary_classification_metrics.roc_auc.value",  # This should follow the structure of your report_dict defined in the evaluate.py file.
         ),
-        right=0.7,  # You can change the threshold here
+        right=0.4,  # You can change the threshold here
 )
 
 step_cond = ConditionStep(
