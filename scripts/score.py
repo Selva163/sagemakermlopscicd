@@ -38,7 +38,7 @@ if __name__ == "__main__":
     logger.debug("Reading input data.")
 
     # Get input file list
-    X_test = pd.read_csv(f's3://{args.testbucket}/test_features.csv', header=None)
+    X_test = pd.read_csv(f'/opt/ml/processing/test/test_features.csv')
     predictions = model.predict(X_test)
 
     csv_buffer3 = StringIO()
