@@ -98,13 +98,13 @@ if __name__ == "__main__":
 
     print("Saving training features to {}".format(train_features_output_path))
     adf = pd.DataFrame(train_features,columns=preprocess.get_feature_names_out())
-    adf.to_csv(baseline_output_path, index=False)
+    adf.to_csv(baseline_output_path,header=False, index=False)
     adf['income'] = y_train
     adf.to_csv(train_features_output_path, index=False)
 
     print("Saving test features to {}".format(test_features_output_path))
     adf = pd.DataFrame(test_features,columns=preprocess.get_feature_names_out())
-    adf.to_csv(infer_output_path, index=False)
+    adf.to_csv(infer_output_path,header=False, index=False)
     adf['income'] = y_test
     adf.to_csv(test_features_output_path, index=False)
 
