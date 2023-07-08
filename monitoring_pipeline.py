@@ -100,8 +100,7 @@ step_process = ProcessingStep(
     code="scripts/process.py",
     processor=sklearn_processor,
     outputs=[
-        ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
-        ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+        ProcessingOutput(output_name="inference", source="/opt/ml/processing/train")
     ],
     job_arguments = ['--train-test-split-ratio', '0.2', 
     '--testbucket', testbucket
@@ -109,9 +108,9 @@ step_process = ProcessingStep(
 )
 
 data_quality_check_config = DataQualityCheckConfig(
-        baseline_dataset=f"s3://{testbucket}/inferencedata/income/", 
+        baseline_dataset=step_process.properties.ProcessingOutputConfig.Outputs["inference"].S3Output.S3Uri, 
         dataset_format=DatasetFormat.csv(header=False),
-        output_s3_uri=f"s3://{testbucket}/models_baselines_results/",
+        output_s3_uri=f"s3://{testbucket}/incomemodel/driftchecks/",
         post_analytics_processor_script='scripts/postprocess_monitor_script.py',
     )
 
@@ -132,7 +131,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch,data_quality_check_step],
+    steps=[step_latest_model_fetch,step_process,data_quality_check_step],
 )
 
 import json

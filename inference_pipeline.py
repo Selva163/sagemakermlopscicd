@@ -89,8 +89,7 @@ step_process = ProcessingStep(
     code="scripts/process.py",
     processor=sklearn_processor,
     outputs=[
-        ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
-        ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+        ProcessingOutput(output_name="inference", source="/opt/ml/processing/inference")
     ],
     job_arguments = ['--train-test-split-ratio', '0.2', 
     '--testbucket', testbucket
@@ -107,7 +106,7 @@ step_infer = ProcessingStep(
                 destination="/opt/ml/processing/model",
                 ),
             ProcessingInput(
-                source=f"s3://{testbucket}/inferencedata/income/", 
+                source=step_process.properties.ProcessingOutputConfig.Outputs["inference"].S3Output.S3Uri, 
                 destination="/opt/ml/processing/test"
                 )
     ],
@@ -120,7 +119,7 @@ pipeline = Pipeline(
     parameters=[
         batch_data,
     ],
-    steps=[step_latest_model_fetch, step_infer],
+    steps=[step_latest_model_fetch,step_process, step_infer],
 )
 
 import json
