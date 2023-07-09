@@ -8,7 +8,7 @@ env:
 jobs:
   local_training_job:
     runs-on: ubuntu-latest
-    name: Job-LocalRun
+    name: Job-SagemakerLocalRun
     steps:
     - uses: actions/checkout@v3
     - name: Fire SageMaker
@@ -30,7 +30,7 @@ jobs:
         
   testci:
     runs-on: ubuntu-latest
-    name: Job-CI
+    name: Job-VerifyPipelineArtifactsAndModel
     needs: local_training_job
     steps:
     - uses: actions/checkout@v3     
