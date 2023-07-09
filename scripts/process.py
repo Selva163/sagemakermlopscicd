@@ -102,9 +102,6 @@ if __name__ == "__main__":
     #writing only the features for monitoring and inference purpose
     baseline_output_path = os.path.join("/opt/ml/processing/monitor", "train_features.csv")
     infer_output_path = os.path.join("/opt/ml/processing/infer", "test_features.csv")
-
-    write_dataset_to_path(train_features,y_train,train_features_output_path,train_labels_output_path,baseline_output_path,preprocess.get_feature_names_out())
-    write_dataset_to_path(test_features,y_test,test_features_output_path,test_labels_output_path,infer_output_path,preprocess.get_feature_names_out())
     
     if args.runtype == "test":
         bucket = args.testbucket # already created on S3
@@ -112,3 +109,6 @@ if __name__ == "__main__":
         write_artifacts_local_mode(bucket,y_train, 'train_labels.csv')
         write_artifacts_local_mode(bucket,pd.DataFrame(test_features), 'test_features.csv')
         write_artifacts_local_mode(bucket,y_test, 'test_labels.csv')
+    else:
+        write_dataset_to_path(train_features,y_train,train_features_output_path,train_labels_output_path,baseline_output_path,preprocess.get_feature_names_out())
+        write_dataset_to_path(test_features,y_test,test_features_output_path,test_labels_output_path,infer_output_path,preprocess.get_feature_names_out())
