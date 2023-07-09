@@ -22,7 +22,7 @@ input_data = "s3://sagemaker-sample-data-{}/processing/census/census-income.csv"
 
 
 sklearn_processor = SKLearnProcessor(
-    framework_version="0.20.0", 
+    framework_version="1.2-1", 
     role=role,
     instance_type=processing_instance, 
     instance_count=1, 
@@ -47,7 +47,7 @@ step_process = ProcessingStep(
 
 sklearn = SKLearn(
     entry_point="scripts/train.py", 
-    framework_version="0.23-1", 
+    framework_version="1.2-1", 
     instance_type=processing_instance, 
     role=role, 
     base_job_name="training",
