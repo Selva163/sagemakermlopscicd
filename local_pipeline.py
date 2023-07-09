@@ -38,6 +38,8 @@ step_process = ProcessingStep(
     outputs=[
         ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
         ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+        ProcessingOutput(output_name="monitor", source="/opt/ml/processing/monitor"),
+        ProcessingOutput(output_name="infer", source="/opt/ml/processing/infer"),
     ],
     job_arguments = ['--train-test-split-ratio', '0.2', 
     '--runtype', 'test',
@@ -51,7 +53,7 @@ sklearn = SKLearn(
     instance_type=processing_instance, 
     role=role, 
     base_job_name="training",
-    hyperparameters = {'solver': 'lbfgs', 'runtype': 'test', 'testbucket': testbucket}
+    hyperparameters = {'solver': 'lbfgs', 'runtype': 'test', 'testbucket': testbucket, 'region': region}
 )
 
 step_train = TrainingStep(

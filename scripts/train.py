@@ -28,8 +28,7 @@ if __name__ == "__main__":
     parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR'))
 
     args, _ = parser.parse_known_args()
-    boto_session = boto3.session.Session(region_name=args.region)
-    sagemaker_session = Session(boto_session=boto_session)
+    
 
     training_data_directory = "/opt/ml/input/data/train"
     train_features_data = os.path.join(training_data_directory, "train_features.csv")
@@ -57,6 +56,8 @@ if __name__ == "__main__":
 
     if args.runtype == "notest":
         joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
+        boto_session = boto3.session.Session(region_name=args.region)
+        sagemaker_session = Session(boto_session=boto_session)
         for hr in hypertuning_results_list:
             dtimem = gmtime()
             fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))

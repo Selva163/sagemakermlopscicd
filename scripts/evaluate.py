@@ -48,9 +48,6 @@ if __name__ == "__main__":
     print("Loading model")
     model = joblib.load("model.joblib")
 
-    boto_session = boto3.session.Session(region_name=args.region)
-    sagemaker_session = Session(boto_session=boto_session)
-
     print("Loading test input data")
     
     test_features_data = os.path.join("/opt/ml/processing/test", "test_features.csv")
@@ -118,6 +115,8 @@ if __name__ == "__main__":
         Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
         )
     else:
+        boto_session = boto3.session.Session(region_name=args.region)
+        sagemaker_session = Session(boto_session=boto_session)
         dtimem = gmtime()
         fg_ts_str = str(strftime("%Y%m%d%H%M%S", dtimem))
         run_name = "evaluate-"+fg_ts_str
