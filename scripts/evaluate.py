@@ -48,7 +48,6 @@ if __name__ == "__main__":
     print("Loading model")
     model = joblib.load("model.joblib")
 
-
     boto_session = boto3.session.Session(region_name=args.region)
     sagemaker_session = Session(boto_session=boto_session)
 

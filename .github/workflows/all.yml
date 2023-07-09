@@ -25,7 +25,7 @@ jobs:
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib s3fs fsspec 
-        python pipeline_sample_local.py
+        python local_pipeline.py
         
   testci:
     runs-on: ubuntu-latest

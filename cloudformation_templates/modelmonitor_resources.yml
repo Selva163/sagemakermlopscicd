@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for setting up model monitor retrain step
+Parameters:
+  SNSTopicName:
+    Description: SNS Topic Name
+    Type: String
+  EmailAddress:
+    Description: Enter an email address to subscribe to your Amazon SNS topic.
+    Type: String
+  CloudWatchAlarmName:
+    Description: Cloud Watch Alarm Name
+    Type: String
+  EventRuleName:
+    Description: Event rule name 
+    Type: String
+  SagemakerTrainingPipelineARN:
+    Description: ARN of the sagemaker pipeline which needs to be triggered for retrain 
+    Type: String
+  SagemakerPipelineTriggerRoleARN:
+    Description: ARN of the role which will be used to trigger the sagemaker pipeline 
+    Type: String
+  RuleTargetId:
+    Description: Unique ID for the event rule target
+    Type: String
+Resources:
+  SNSTopic0:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: !Ref SNSTopicName
+  SNSSubscription0:
+    Type: AWS::SNS::Subscription
+    Properties: 
+      Endpoint: !Ref EmailAddress
+      Protocol: email
+      TopicArn: !Ref SNSTopic0
+  DriftMetricAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+        AlarmName: !Ref CloudWatchAlarmName
+        ActionsEnabled: true
+        OKActions: []
+        AlarmActions:
+            - !Ref SNSTopic0
+        InsufficientDataActions: []
+        MetricName: feature_baseline_drift__c2
+        Namespace: aws/sagemaker/ModelBuildingPipeline/data-metrics
+        Statistic: Average
+        Dimensions:
+            - Name: PipelineName
+              Value: monitoring-pipeline
+        Period: 60
+        EvaluationPeriods: 1
+        DatapointsToAlarm: 1
+        Threshold: 0.3
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: missing
+  EventRule0:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.cloudwatch
+        detail-type:
+          - CloudWatch Alarm State Change
+        resources:
+          - !GetAtt DriftMetricAlarm.Arn
+        detail:
+          state:
+            value:
+              - ALARM
+      Name: !Ref EventRuleName
+      State: ENABLED
+      Targets:
+        - Id: !Ref RuleTargetId
+          Arn: !Ref SagemakerTrainingPipelineARN
+          RoleArn: !Ref SagemakerPipelineTriggerRoleARN

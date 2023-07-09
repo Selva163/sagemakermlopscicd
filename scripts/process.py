@@ -31,14 +31,21 @@ columns = [
 class_labels = [" - 50000.", " 50000+."]
 
 
-def print_shape(df):
-    negative_examples, positive_examples = np.bincount(df["income"])
-    print(
-        "Data shape: {}, {} positive examples, {} negative examples".format(
-            df.shape, positive_examples, negative_examples
-        )
-    )
+def write_dataset_to_path(tt_features,tt_labels,features_output_path,labels_output_path,monitor_infer_path,feature_columns):
+    print("Saving features to {}".format(features_output_path))
+    adf = pd.DataFrame(train_features,columns=feature_columns)
+    adf.to_csv(monitor_infer_path,header=False, index=False)
+    adf['income'] = tt_labels
+    adf.to_csv(features_output_path, index=False)
 
+    print("Saving labels to {}".format(labels_output_path))
+    tt_labels.to_csv(labels_output_path, header=False, index=False)
+
+def write_artifacts_local_mode(bucket,obj_to_write, filename_to_write):
+    csv_buffer = StringIO()
+    obj_to_write.to_csv(csv_buffer, header=False, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket, filename_to_write).put(Body=csv_buffer.getvalue())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -86,52 +93,22 @@ if __name__ == "__main__":
 
     print("Train data shape after preprocessing: {}".format(train_features.shape))
     print("Test data shape after preprocessing: {}".format(test_features.shape))
-    print(pd.DataFrame(train_features).columns)
-    print(pd.DataFrame(test_features).columns)
+    
+    #paths for training and test dataset and labels.
     train_features_output_path = os.path.join("/opt/ml/processing/train", "train_features.csv")
     train_labels_output_path = os.path.join("/opt/ml/processing/train", "train_labels.csv")
+    test_features_output_path = os.path.join("/opt/ml/processing/test", "test_features.csv")
+    test_labels_output_path = os.path.join("/opt/ml/processing/test", "test_labels.csv")
+    #writing only the features for monitoring and inference purpose
     baseline_output_path = os.path.join("/opt/ml/processing/monitor", "train_features.csv")
     infer_output_path = os.path.join("/opt/ml/processing/infer", "test_features.csv")
 
-    test_features_output_path = os.path.join("/opt/ml/processing/test", "test_features.csv")
-    test_labels_output_path = os.path.join("/opt/ml/processing/test", "test_labels.csv")
-
-    print("Saving training features to {}".format(train_features_output_path))
-    adf = pd.DataFrame(train_features,columns=preprocess.get_feature_names_out())
-    adf.to_csv(baseline_output_path,header=False, index=False)
-    adf['income'] = y_train
-    adf.to_csv(train_features_output_path, index=False)
-
-    print("Saving test features to {}".format(test_features_output_path))
-    adf = pd.DataFrame(test_features,columns=preprocess.get_feature_names_out())
-    adf.to_csv(infer_output_path,header=False, index=False)
-    adf['income'] = y_test
-    adf.to_csv(test_features_output_path, index=False)
-
-    print("Saving training labels to {}".format(train_labels_output_path))
-    y_train.to_csv(train_labels_output_path, header=False, index=False)
-
-    print("Saving test labels to {}".format(test_labels_output_path))
-    y_test.to_csv(test_labels_output_path, header=False, index=False)
+    write_dataset_to_path(train_features,y_train,train_features_output_path,train_labels_output_path,baseline_output_path,preprocess.get_feature_names_out())
+    write_dataset_to_path(test_features,y_test,test_features_output_path,test_labels_output_path,infer_output_path,preprocess.get_feature_names_out())
     
     if args.runtype == "test":
         bucket = args.testbucket # already created on S3
-        csv_buffer = StringIO()
-        pd.DataFrame(train_features).to_csv(csv_buffer, header=False, index=False)
-        s3_resource = boto3.resource('s3')
-        s3_resource.Object(bucket, 'train_features.csv').put(Body=csv_buffer.getvalue())
-        
-        csv_buffer1 = StringIO()
-        y_train.to_csv(csv_buffer1, header=False, index=False)
-        s3_resource = boto3.resource('s3')
-        s3_resource.Object(bucket, 'train_labels.csv').put(Body=csv_buffer1.getvalue())
-
-        csv_buffer2 = StringIO()
-        pd.DataFrame(test_features).to_csv(csv_buffer2, header=False, index=False)
-        s3_resource = boto3.resource('s3')
-        s3_resource.Object(bucket, 'test_features.csv').put(Body=csv_buffer2.getvalue())
-        
-        csv_buffer3 = StringIO()
-        y_test.to_csv(csv_buffer3, header=False, index=False)
-        s3_resource = boto3.resource('s3')
-        s3_resource.Object(bucket, 'test_labels.csv').put(Body=csv_buffer3.getvalue())
+        write_artifacts_local_mode(bucket,pd.DataFrame(train_features), 'train_features.csv')
+        write_artifacts_local_mode(bucket,y_train, 'train_labels.csv')
+        write_artifacts_local_mode(bucket,pd.DataFrame(test_features), 'test_features.csv')
+        write_artifacts_local_mode(bucket,y_test, 'test_labels.csv')
