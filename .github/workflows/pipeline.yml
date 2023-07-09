@@ -23,6 +23,7 @@ jobs:
         IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         GITHUB_SHA: ${{ github.sha }}
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
+      working-directory: ./src
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker sagemaker[local] joblib s3fs fsspec 
         python local_pipeline.py
@@ -69,6 +70,7 @@ jobs:
         GITHUB_SHA: ${{ github.sha }}
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
         AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+      working-directory: ./src
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python training_pipeline.py 
@@ -92,6 +94,7 @@ jobs:
         GITHUB_SHA: ${{ github.sha }}
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
         AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+      working-directory: ./src
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python inference_pipeline.py 
@@ -115,6 +118,7 @@ jobs:
         GITHUB_SHA: ${{ github.sha }}
         AWS_TEST_BUCKET: ${{ secrets.AWS_TEST_BUCKET }}
         AWS_SAGEMAKER_ROLE: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+      working-directory: ./src
       run: |
         pip install --no-cache-dir --upgrade awscli boto3 sagemaker joblib s3fs fsspec 
         python monitoring_pipeline.py 

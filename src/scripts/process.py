@@ -33,7 +33,7 @@ class_labels = [" - 50000.", " 50000+."]
 
 def write_dataset_to_path(tt_features,tt_labels,features_output_path,labels_output_path,monitor_infer_path,feature_columns):
     print("Saving features to {}".format(features_output_path))
-    adf = pd.DataFrame(train_features,columns=feature_columns)
+    adf = pd.DataFrame(tt_features,columns=feature_columns)
     adf.to_csv(monitor_infer_path,header=False, index=False)
     adf['income'] = tt_labels
     adf.to_csv(features_output_path, index=False)
