@@ -5,6 +5,7 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 import json
 from sagemaker.s3 import S3Downloader
 from sagemaker.processing import ProcessingInput, ProcessingOutput
+from sagemaker.inputs import TrainingInput
 from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.workflow.steps import ProcessingStep
 from sagemaker.workflow.steps import TrainingStep
@@ -58,7 +59,15 @@ sklearn = SKLearn(
 
 step_train = TrainingStep(
     name="TrainStep",
-    estimator=sklearn
+    estimator=sklearn,
+    inputs={
+        "train": TrainingInput(
+            s3_data=step_process.properties.ProcessingOutputConfig.Outputs[
+                "train_data"
+            ].S3Output.S3Uri,
+            content_type="text/csv"
+        )
+    }
 )
 step_train.add_depends_on([step_process])
 
@@ -66,10 +75,9 @@ step_evaluate = ProcessingStep(
     name="Evaluate",
     code="scripts/evaluate.py",
     processor=sklearn_processor,
-    inputs=[ProcessingInput(source=input_data, destination="/opt/ml/processing/input")],
-    outputs=[
-        ProcessingOutput(output_name="train_data", source="/opt/ml/processing/train"),
-        ProcessingOutput(output_name="test_data", source="/opt/ml/processing/test"),
+    inputs=[
+        ProcessingInput(source=step_train.properties.ModelArtifacts.S3ModelArtifacts, destination="/opt/ml/processing/model"),
+        ProcessingInput(source=step_process.properties.ProcessingOutputConfig.Outputs["test_data"].S3Output.S3Uri, destination="/opt/ml/processing/test"),
     ],
     job_arguments = ['--runtype', 'test',
     '--testbucket', testbucket
