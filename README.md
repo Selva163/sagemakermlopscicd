@@ -4,4 +4,4 @@ A CI/CD pipeline with SageMaker and Github that helps you to collaborate on a Ma
 ## Usage
 For a demo of this project see my blog post:
 
-< coming soon >
+https://medium.com/@selvasaravanakumar.er/mlops-implementation-using-sagemaker-pipelines-and-github-actions-2040d329701a)https://medium.com/@selvasaravanakumar.er/mlops-implementation-using-sagemaker-pipelines-and-github-actions-2040d329701a
