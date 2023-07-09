@@ -102,11 +102,6 @@ if __name__ == "__main__":
     with open(evaluation_path, "w") as f:
         f.write(json.dumps(report_dict))
     
-    preds_output_path = os.path.join("/opt/ml/processing/prediction", "predictions.csv")
-    X_test["income"] = y_test
-    X_test["income_pred"] = predictions
-    X_test.to_csv(preds_output_path, index=False)
-    
     if args.runtype == "test":
         s3 = boto3.resource('s3')
         s3object = s3.Object(args.testbucket, 'report_dict.json')
@@ -115,6 +110,11 @@ if __name__ == "__main__":
         Body=(bytes(json.dumps(report_dict).encode('UTF-8')))
         )
     else:
+        preds_output_path = os.path.join("/opt/ml/processing/prediction", "predictions.csv")
+        X_test["income"] = y_test
+        X_test["income_pred"] = predictions
+        X_test.to_csv(preds_output_path, index=False)
+        
         boto_session = boto3.session.Session(region_name=args.region)
         sagemaker_session = Session(boto_session=boto_session)
         dtimem = gmtime()
