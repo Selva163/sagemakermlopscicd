@@ -53,9 +53,9 @@ if __name__ == "__main__":
     cv_results = grid_search.cv_results_
     df = pd.DataFrame(cv_results)
     hypertuning_results_list = df[df['mean_test_score'].notna()][['param_C', 'param_solver', 'param_penalty', 'mean_test_score']].values
+    joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
 
     if args.runtype == "notest":
-        joblib.dump(model, os.path.join(args.model_dir, "model.joblib"))
         boto_session = boto3.session.Session(region_name=args.region)
         sagemaker_session = Session(boto_session=boto_session)
         for hr in hypertuning_results_list:

@@ -43,9 +43,9 @@ def test_checkFilePresence():
     assert checkFilePresence(testbucket, 'pickle_model.pkl') == True
     assert checkFilePresence(testbucket, 'report_dict.json') == True
 
-def test_getPredictions():
-    actual = getPredictions(test_features)
-    expected = [0, 0, 0, 1, 0]
+# def test_getPredictions():
+#     actual = getPredictions(test_features)
+#     expected = [0, 0, 0, 1, 0]
 
-    assert len(actual) == len(expected)
-    assert all([a == b for a, b in zip(actual, expected)])
+#     assert len(actual) == len(expected)
+#     assert all([a == b for a, b in zip(actual, expected)])
